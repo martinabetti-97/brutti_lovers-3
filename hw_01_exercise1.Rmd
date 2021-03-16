@@ -1,0 +1,139 @@
+---
+title: "HOMEWORK 01"
+output: html_document
+---
+
+```{r library, echo=FALSE, message=FALSE, warning=FALSE}
+
+require(viridis) 
+library(DT)
+
+```
+
+We know that a function $f$ can be approximated by less complex objects, such as Fourier's expansions. In order to find the best approximation we must define the system that we are working with. If we are in a Hilbert space $H$ with an orthonormal basis $B$, the best approximant is the partial sums $S_m(f,B)=\sum_{n=1}^m<f,b_n>$, where $S_m$ is a is just a linear, $m$ dimensional subspace of $S$. 
+
+However, to provide a better approximation error, it may be convenient to use a non-linear approximation of the form $S_{\Delta}(f, B)$ to the Doppler function istead one of the form $S_m(f, B)$. 
+For a fixed $m$, $S_{\Delta}(f, B)$ has the same cardinality (and therefore complexity) as $S_m(f, B)$, but in the non linear case the approximants $S_m(f)$ come from different linear subspaces ($\Delta(f)$).
+We know that, since the *Fourier* coefficients are the optimal choice to minimize $\Delta_J=||m-\sum_{j=1}^Jc_j\phi_j||$, the best choice of $c_j$ is $\beta$. Consequently, the best choice of $\Delta_m$ is the set of the indices $m$ with the biggest coefficients in absolute value of $\beta$. We can check the performance of this non-linear approximation by verifying that $||f-S_{\Delta_m}(f,B)|| \leq ||f-S_m(f,B)||$. 
+
+
+It is important to underline that this applies only to the extremely simple case of a Hilbert space with an orthonormal base, therefore we will consider the cosine basis.
+
+### Defyning Cosine-basis and Doppler function scaled in [0,1]
+
+```{r setup}
+
+cos.basis = function(x, j) 1*(j == 0) + sqrt(2)*cos(pi*j*x)*(j > 0)
+doppler.fun <-  function(x) sqrt(x*(1 - x))*sin( (2.1*pi)/(x + 0.05))
+
+```
+
+### Fourier coefficients of the Doppler under cosine-basis
+
+```{r fourier coefficients}
+
+j.max   <- 200
+f.coeff <- rep(NA, j.max+1)
+
+for (idx in 0:j.max){
+  foo = tryCatch(
+    integrate(function(x, j) doppler.fun(x) * cos.basis(x,j), lower = 0, upper = 1, j = idx)$value,
+    error = function(e) NA
+  )
+  f.coeff[idx + 1] = foo
+}
+
+```
+
+### Computing approximation
+In the linear case we pick the the first m (j.max) Fourier transforms, while in the non-linear case we pick m indices corresponding to the greater Fourier transforms.
+
+```{r funcs}
+
+
+# sorting indexes of Fourier transform
+idx_sorted <- sort(abs(f.coeff), decreasing = T, index.return = T)$ix
+
+# Linear
+J_linear <- function(x, f.coeff = f.coeff, j.max){
+  out = rep(0, length(x))
+  for(idx in 0:j.max){
+    if(!is.na(f.coeff[idx + 1])) out = out + f.coeff[idx + 1] * cos.basis(x, j = idx)
+  }
+  return(out)
+}
+
+# Non linear
+J_nonlinear <- function(x, f.coeff = f.coeff, j.max){
+  out = rep(0, length(x))
+  for(idx in head(idx_sorted,j.max)){
+    if(!is.na(f.coeff[idx])) out = out + f.coeff[idx] * cos.basis(x, j = idx)
+  }
+  return(out)
+}
+
+```
+
+### Plots
+We visualize some n-terms approximations
+
+```{r pressure, fig.width=20, fig.height=10}
+
+par(mfrow = c(2,3))
+j.seq = c(5, 10, 25, 50, 100, 150)
+mycol = viridis(length(j.seq), alpha = .7)
+
+
+# Linear
+error_linear = c()
+
+f_linear <- function(f.coeff){
+  for (idx in 1:length(j.seq)){
+     
+    curve(doppler.fun(x), from = 0, to = 1, 
+          main = paste(j.seq[idx], "-term approximation", sep = ""), xlab = "", 
+          ylab = expression(m[J](x)), n = 1001, col = gray(.8), lwd = 3)
+    
+    curve(J_linear(x, f.coeff = f.coeff , j.seq[idx]),
+          n = 1001, col = mycol[idx], lwd = 5,add = TRUE)
+
+    error_linear <<- c(error_linear, integrate(function(x) 
+    (doppler.fun(x) - J_linear(x, f.coeff = f.coeff, j.max = idx) )^2, 
+    lower = 0, upper = 1)$value) ##sqrt???
+    }
+}
+
+
+# Non linear
+error_nonlinear = c()
+
+f_nonlinear <- function(f.coeff){
+  for (idx in 1:length(j.seq)){
+    
+    curve(doppler.fun(x), from = 0, to = 1, 
+          main = paste(j.seq[idx], "-term approximation", sep = ""), xlab = "", 
+          ylab = expression(m[J](x)), n = 1001, col = gray(.8), lwd = 3)
+    
+    curve(J_nonlinear(x, f.coeff = f.coeff, j.seq[idx]), 
+          n = 1001, col = mycol[idx], lwd = 5,add = TRUE)
+    
+    error_nonlinear <<- c(error_nonlinear, integrate(function(x) 
+      (doppler.fun(x) - J_nonlinear(x, f.coeff = f.coeff, j.max = idx) )^2, 
+      lower = 0, upper = 1)$value)  
+  }
+}
+
+f_linear(f.coeff)
+f_nonlinear(f.coeff)
+
+```
+
+### L2 -reconstruction error
+
+```{r bonus}
+
+error_df <- data.frame(error_nonlinear,error_linear)
+rownames(error_df) <- j.seq
+datatable(error_df)
+
+```
