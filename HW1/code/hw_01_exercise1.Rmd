@@ -67,7 +67,7 @@ J_linear <- function(x, f.coeff = f.coeff, j.max){
 J_nonlinear <- function(x, f.coeff = f.coeff, j.max){
   out = rep(0, length(x))
   for(idx in head(idx_sorted,j.max)){
-    if(!is.na(f.coeff[idx])) out = out + f.coeff[idx] * cos.basis(x, j = idx)
+    if(!is.na(f.coeff[idx])) out = out + f.coeff[idx] * cos.basis(x, j = idx-1)
   }
   return(out)
 }
