@@ -97,9 +97,9 @@ f_linear <- function(f.coeff){
     curve(J_linear(x, f.coeff = f.coeff , j.seq[idx]),
           n = 1001, col = mycol[idx], lwd = 5,add = TRUE)
 
-    error_linear <<- c(error_linear, integrate(function(x) 
-    (doppler.fun(x) - J_linear(x, f.coeff = f.coeff, j.max = idx) )^2, 
-    lower = 0, upper = 1)$value) ##sqrt???
+    error_linear <<- c(error_linear, sqrt(integrate(function(x) 
+    (doppler.fun(x) - J_linear(x, f.coeff = f.coeff, j.max = j.seq[idx]) )^2, 
+    lower = 0, upper = 1)$value)) ##sqrt???
     }
 }
 
@@ -117,9 +117,9 @@ f_nonlinear <- function(f.coeff){
     curve(J_nonlinear(x, f.coeff = f.coeff, j.seq[idx]), 
           n = 1001, col = mycol[idx], lwd = 5,add = TRUE)
     
-    error_nonlinear <<- c(error_nonlinear, integrate(function(x) 
-      (doppler.fun(x) - J_nonlinear(x, f.coeff = f.coeff, j.max = idx) )^2, 
-      lower = 0, upper = 1)$value)  
+    error_nonlinear <<- c(error_nonlinear, sqrt(integrate(function(x) 
+      (doppler.fun(x) - J_nonlinear(x, f.coeff = f.coeff, j.max = j.seq[idx]) )^2, 
+      lower = 0, upper = 1)$value))
   }
 }
 
