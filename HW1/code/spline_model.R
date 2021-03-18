@@ -1,6 +1,6 @@
 # ieri_domani -------------------------------------------------------------
 
-load("HW1/data/ieri_domani.RData")
+load("/path/to/ieri_domani.RData")
 str(df)
 head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=NA))
 
@@ -8,21 +8,13 @@ head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=
 train <- data.frame(x = df$x, y = df$y.yesterday)
 test  <- data.frame(x = df$x, y = df$y.tomorrow)
 
-
 # First step is to generate the 3 functions we will be fitting our training data over
 # For this purpose we are given 2 parameters in each case: (d=3, q=3), (d=3, q=5), 
 # (d=3, q=10)
 q_vals = c(3, 5, 10)
 
-knots = list()
-for (i in 1:length(q_vals)) {
-  knots[[i]] = quantile(train$x, 
-                        probs = seq(0, 1, 
-                                    length.out = q_vals[i]+2))[1:q_vals[i]+1]
-  
-}
-
 d = 3
+
 # Generate the part of the general design matrix that is common to all
 general_design_matrix = matrix(NA, nrow = nrow(train), ncol = (d+1))
 general_design_matrix[,1] = 1
@@ -31,52 +23,32 @@ general_design_matrix[,3] = (train$x)^2
 general_design_matrix[,4] = (train$x)^3
 
 # Generate the design matrices that are specific for each q value
-design_matrix_q_3 = matrix(NA, nrow = nrow(train), ncol = 3)
-design_matrix_q_5 = matrix(NA, nrow = nrow(train), ncol = 5)
-design_matrix_q_10 = matrix(NA, nrow = nrow(train), ncol = 10)
-
-for (i in 1:ncol(design_matrix_q_3)) {
-  design_matrix_q_3[,i] = (pmax(0, train$x-knots[[1]][i]))^3
-}
-
-for (i in 1:ncol(design_matrix_q_5)) {
-  design_matrix_q_5[,i] = (pmax(0, train$x-knots[[2]][i]))^3
-}
-
-for (i in 1:ncol(design_matrix_q_10)) {
-  design_matrix_q_10[,i] = (pmax(0, train$x-knots[[3]][i]))^3
+create_matrix <- function(q) {
+  design_matrix = matrix(NA, nrow = nrow(train), ncol = q)
+  knot = quantile(train$x, probs = seq(0, 1, length.out = q+2))[1:q+1]
+  for (i in 1:q) {
+    design_matrix[,i] = (pmax(0, train$x-knots[[match(q,q_vals)]][i]))^3
+  }
+  return (design_matrix)
 }
 
 y = train$y
 
-beta_q_3 = lm(y ~ 1 + general_design_matrix[,2] + general_design_matrix[,3] + 
-                general_design_matrix[,4] + design_matrix_q_3[,1] + 
-                design_matrix_q_3[,2] + design_matrix_q_3[,3])
+fhat_plot <- function(q) {
+  beta = lm(y ~ 1 + general_design_matrix[,2] + general_design_matrix[,3] + 
+            general_design_matrix[,4] + create_matrix(q)[,1] + 
+            create_matrix(q)[,2] + create_matrix(q)[,3])
+  fhat <- predict(beta, newdata = train)
+  plot( y ~ x , train)
+  lines(fhat ~ x, train)
+  output <- list("beta" = beta, "fhat" = fhat)
+  return (output)
+}
 
-fhat_q_3 <- predict(beta_q_3, newdata = train)
-plot( y ~ x , train)
-lines(fhat_q_3 ~ x, train)
+q_3 <- fhat_plot(3)
+q_5 <- fhat_plot(5)
+q_10 <-fhat_plot(10)
 
-beta_q_5 = lm(y ~ 1 + general_design_matrix[,2] + general_design_matrix[,3] + 
-                general_design_matrix[,4] + design_matrix_q_5[,1] + 
-                design_matrix_q_5[,2] + design_matrix_q_5[,3] + 
-                design_matrix_q_5[,4] + design_matrix_q_5[,5])
-
-fhat_q_5 <- predict(beta_q_5, newdata = train)
-plot( y ~ x , train)
-lines(fhat_q_5 ~ x, train)
-
-beta_q_10 = lm(y ~ 1 + general_design_matrix[,2] + general_design_matrix[,3] + 
-                general_design_matrix[,4] + design_matrix_q_10[,1] + 
-                design_matrix_q_10[,2] + design_matrix_q_10[,3] + 
-                design_matrix_q_10[,4] + design_matrix_q_10[,5] + 
-                design_matrix_q_10[,6] + design_matrix_q_10[,7] + 
-                design_matrix_q_10[,8] + design_matrix_q_10[,9] + 
-                design_matrix_q_10[,10])
-
-fhat_q_10 <- predict(beta_q_10, newdata = train)
-plot( y ~ x , train)
-lines(fhat_q_10 ~ x, train)
 
 # Now that we have the fit over our Training data we can go ahead and compute some 
 # quantities to predict which of the q values (hyperparameters) gives us the best 
@@ -87,7 +59,7 @@ lines(fhat_q_10 ~ x, train)
 
 mean_squared_error <- function(y_pred, f_hat) mean((y_pred-f_hat)^2)
 
-fhats = list(fhat_q_3, fhat_q_5, fhat_q_10)
+fhats = list(q_3$fhat, q_5$fhat, q_10$fhat)
 cp = rep(NA, 3)
 
 for (i in 1:3) {
