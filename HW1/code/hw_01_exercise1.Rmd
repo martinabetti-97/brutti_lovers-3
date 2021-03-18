@@ -19,7 +19,7 @@ We know that, since the *Fourier* coefficients are the optimal choice to minimiz
 
 It is important to underline that this applies only to the extremely simple case of a Hilbert space with an orthonormal base, therefore we will consider the cosine basis.
 
-### Defyning Cosine-basis and Doppler function scaled in [0,1]
+### Defining Cosine-basis and Doppler function scaled in [0,1]
 
 ```{r setup}
 
@@ -99,7 +99,7 @@ f_linear <- function(f.coeff){
 
     error_linear <<- c(error_linear, sqrt(integrate(function(x) 
     (doppler.fun(x) - J_linear(x, f.coeff = f.coeff, j.max = j.seq[idx]) )^2, 
-    lower = 0, upper = 1)$value)) ##sqrt???
+    lower = 0, upper = 1)$value))
     }
 }
 
@@ -132,7 +132,7 @@ f_nonlinear(f.coeff)
 
 ```{r bonus}
 
-error_df <- data.frame(error_nonlinear,error_linear)
+error_df <- data.frame(error_linear, error_nonlinear)
 rownames(error_df) <- j.seq
 datatable(error_df)
 
