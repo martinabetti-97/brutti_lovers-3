@@ -10,14 +10,49 @@ library(DT)
 
 ```
 
-We know that a function $f$ can be approximated by less complex objects, such as Fourier's expansions. In order to find the best approximation we must define the system that we are working with. If we are in a Hilbert space $H$ with an orthonormal basis $B$, the best approximant is the partial sums $S_m(f,B)=\sum_{n=1}^m<f,b_n>$, where $S_m$ is a is just a linear, $m$ dimensional subspace of $S$. 
-
-However, to provide a better approximation error, it may be convenient to use a non-linear approximation of the form $S_{\Delta}(f, B)$ to the Doppler function instead one of the form $S_m(f, B)$. 
-For a fixed $m$, $S_{\Delta}(f, B)$ has the same cardinality (and therefore complexity) as $S_m(f, B)$, but in the non linear case the approximants $S_m(f)$ come from different linear subspaces ($\Delta(f)$).
-We know that since the *Fourier* coefficients are the optimal choice to minimize $\Delta_J=||m-\sum_{j=1}^Jc_j\phi_j||$, the best choice of $c_j$ is $\beta$. Consequently, the best choice of $\Delta_m$ is the set of the indices $m$ with the biggest coefficients in absolute value of $\beta$. We can check the performance of this non-linear approximation by verifying that $||f-S_{\Delta_m}(f,B)|| \leq ||f-S_m(f,B)||$. 
+### Part 1 - Linear Algebra is good...
 
 
-Since in the non-linear case this approximation applies only to the case of an orthonormal system $B$ of a Hilbert space, we will consider the cosine basis. Below we define the function describing the cosine basis and the Doppler function.
+#### Question 3.a.
+
+We will try to explain this parallelism by first reviewing the logic used in the Transformed Feature Space.
+
+As we have seen in class, having a finite number of feature variables (for the sake of simplicity lets make this 1 and denote it by $x$), we could use them to predict another target variable (1 dimensional, $y$) through a linear combination as follows:
+
+\begin{align}
+y = \beta_0 + \beta_1x
+\end{align}
+
+Such models assumption might not be sufficient to capture all the information in $y$ through this simple transformation (when projecting $y$ on the 1-dimensional space of $x$ we might loose too much information). For this reason, we might want to think of a more complex set of transformations we can apply on our feature $x$ in order to capture more details about the target variable. This can be accomplished through a function/transformation $\phi(x)$ such that:
+
+\begin{align}
+y = \sum_{j=1}^n \beta_j + \phi_j(x)
+\end{align}
+
+This is basically the same principle used in the series expansion in which we try to expand a function $m(x)$ (possibly complex) by adding up less complex and therefore easier to handle functions together:
+
+\begin{align}
+m(x) = \sum_{j=1}^n \beta_j + \phi_j(x)
+\end{align}
+
+It is important to highlight that one of the basic reasons for which these two principles work (in the vector and function space) is because in both case it is possible to exploit the dot product property between the elements living in the respective spaces.
+
+Finally, we would also like to highlight that very nice properties pop up in both scenarios if the transformations ($\phi_j(x)$) form an orthonormal set of functions/vectors:
+
+- Adding additional components to the sum would not change the previous $\beta_j$ values.
+- $\beta_j$ can be estimated using the Generalized Fourier Expansion, which in the limit tends to an interpolation function of y or $m(x)$.
+
+#### Question 3.b/c.
+
+We know that a function $m(\cdot)$ can be approximated by less complex functions through a linear combination of Fourier coefficients. In order to find the best approximation we must define a system to work with. If we are in a Hilbert space $H$ with an orthonormal basis $\phi_j(x)$, the best approximant is the partial sums $m=\sum_{j=1}^J<m(x),\phi_j(x)>$, where $m(x)$ is just a linear, $J$ dimensional subspace of $H$. 
+
+However, to provide a better approximation error, it may be convenient to use a non-linear approximation of the form $m_J^*(x)$ to the Doppler function, which requires less Fourier coefficients (reducing the $||m||^2$).
+For a fixed $J$, $m_J^*(x)$ has the same cardinality (and therefore complexity) as $m_J(x)$, but in the non linear case the approximants $\{\beta_j\}^J_j$ come from different linear sub-spaces.
+We know that, since the *Fourier* coefficients are the optimal choice to minimize $\Delta_J=||m-\sum_{j=1}^Jc_j\phi_j||$, the best choice of $c_j$ is $\beta$. Consequently, the best choice of $\Delta_J$ is the set of the indices $J$ with the biggest coefficients in absolute value of $\beta$. 
+
+It is important to underline that this applies only to the extremely simple case of a Hilbert space with an orthonormal base, therefore we will consider a cosine basis.
+
+### Defining Cosine-basis and Doppler function scaled in [0,1]
 
 ```{r setup}
 
@@ -119,19 +154,19 @@ f_nonlinear <- function(f.coeff){
 
 f_linear(f.coeff)
 f_nonlinear(f.coeff)
-
 ```
 
 From the plots above we can clearly see that low $j$ capture the low resolution behavior of the Doppler function, while at high $j$, $\phi_j$ tends to describe the high resolution details.
 We can also clearly observe the effect of the inhomogeneous smoothness of the Doppler function on the approximation. In fact, also at small values of $j$, the smoother part of the function is already well approximated, while the high complexity of the function around the origin is hardly represented.
 
-One more detail we can appreciate from this plots is that, after a certain $j$, the addition of more values for the estimation does not improve it significantly. To justify this let's recall that the decay of the Fourier coefficients, for a given basis $B$, is related to the smoothness of the function under consideration. This implies that, if a function is smooth, its Fourier coefficients $\beta_j$ will be small. 
+One more detail we can appreciate from this plots is that, after a certain $j$, the addition of more values for the estimation does not improve it significantly. To justify this let's recall that the decay of the Fourier coefficients, for a given basis $\phi_j$, is related to the smoothness of the function under consideration. This implies that, if a function is smooth, its Fourier coefficients $\beta_j$ will be small. 
 
 Here, we provide a plot to clarify this point.
 
 ```{r check, fig.width=10, fig.height=5}
 
-plot(abs(f.coeff), ylab = 'Fourier coefficient (abs value)')
+plot(abs(f.coeff), ylab = 'Fourier coefficient (abs value)', 
+     main='Coefficients captured by Linear Fourier Expansion')
 abline(v = 5, lwd = 3, col = mycol[1])
 abline(v = 10, lwd = 3, col = mycol[2])
 abline(v = 25,lwd = 3,col = mycol[3])
@@ -140,7 +175,7 @@ abline(v = 100, lwd = 3,col = mycol[5])
 abline(v = 150, lwd = 3, col = mycol[6])
 ```
 
-To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid choice, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
+### L2 -reconstruction error
 
 ```{r bonus}
 
@@ -150,7 +185,6 @@ datatable(error_df)
 
 ```
 
-By looking at the the table above we can actually verify that, for any $j$, the non-linear approximation is closer to the true Doppler function than its linear counterpart. 
-
+To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid choice, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
 
 
