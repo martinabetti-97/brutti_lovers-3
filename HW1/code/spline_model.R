@@ -26,24 +26,6 @@ generate_gdm_func <- function(train) {
   return(general_design_matrix)
 }
 
-
-# Generate the design matrices that are specific for each q value
-# design_matrix_q_3 = matrix(NA, nrow = nrow(train), ncol = 3)
-# design_matrix_q_5 = matrix(NA, nrow = nrow(train), ncol = 5)
-# design_matrix_q_10 = matrix(NA, nrow = nrow(train), ncol = 10)
-# 
-# for (i in 1:ncol(design_matrix_q_3)) {
-#   design_matrix_q_3[,i] = (pmax(0, train$x-knots[[1]][i]))^3
-# }
-# 
-# for (i in 1:ncol(design_matrix_q_5)) {
-#   design_matrix_q_5[,i] = (pmax(0, train$x-knots[[2]][i]))^3
-# }
-# 
-# for (i in 1:ncol(design_matrix_q_10)) {
-#   design_matrix_q_10[,i] = (pmax(0, train$x-knots[[3]][i]))^3
-# }
-
 create_matrix <- function(q, train) {
   design_matrix = matrix(NA, nrow = nrow(train), ncol = q)
   knots = quantile(train$x, probs = seq(0, 1, length.out = q+2))[1:q+1]
@@ -54,8 +36,9 @@ create_matrix <- function(q, train) {
 }
 
 fhat_func <- function(q, train_coef=train, predict_sample=train) {
+  y = train$y
   beta = lm(y ~ generate_gdm_func(train)[,2:4] + create_matrix(q, train))
-  fhat <- predict(beta, newdata = predict_sample)
+  fhat <- predict(beta, newdata = list(x = predict_sample$x))
   return ('fhat' = fhat)
 }
 
@@ -67,7 +50,7 @@ fhat_plot <- function(q, train) {
 }
 
 
-q_3 <- fhat_func(3, train_coef=train, predict_sample=train[1:10, ])
+q_3 <- fhat_func(3, train_coef=train, predict_sample=train)
 q_5 <- fhat_func(5, train_coef=train, predict_sample=train)
 q_10 <-fhat_func(10, train_coef=train, predict_sample=train)
 
@@ -97,6 +80,7 @@ for (i in 1:3) {
 }
 
 plot(cp, type = 'b')
+# CP is over-optimist with regards to the CV approaches (LOOCV and K-fold)
 
 
 # CV: cv = 1/K * sum(MSE_Te).
@@ -114,10 +98,7 @@ k_fold_cv <- function(q, train, K=5) {
   return(mean(kcv))
 }
 
-
-
-# hate sapply
-cv <- sapply(q_vals, k_fold_cv, train=train, K=10)
+cv <- sapply(q_vals, k_fold_cv, train=train, K=30)
 
 plot(cv, type='b')
 
