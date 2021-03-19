@@ -23,7 +23,7 @@ As we have seen in class, having a finite number of feature variables (for the s
 y = \beta_0 + \beta_1x
 \end{align}
 
-Such models assumption might not be sufficient to capture all the information in $y$ through this simple transformation (when projecting $y$ on the 1-dimensional space of $x$ we might loose too much information). For this reason, we might want to think of a more complex set of transformations we can apply on our feature $x$ in order to capture more details about the target variable. This can be accomplished through a function/transformation $\phi(x)$ such that:
+Such model assumptions might not be sufficient to capture all the information in $y$ through this simple transformation (when projecting $y$ on the 1-dimensional space of $x$ we might lose too much information). For this reason, we might want to think of a more complex set of transformations we can apply on our feature $x$ in order to capture more details about the target variable. This can be accomplished through a function/transformation $\phi(x)$ such that:
 
 \begin{align}
 y = \sum_{j=1}^n \beta_j + \phi_j(x)
@@ -78,7 +78,7 @@ for (idx in 0:j.max){
 
 ```
 
-In the linear case we approximate our function by picking the the first $m$ Fourier transforms. In the non-linear case we pick $m$ indices corresponding to the greater Fourier transforms in absolute values.
+In the linear case we approximate our function by picking the first $m$ Fourier transforms. In the non-linear case we pick $m$ indices corresponding to the greater Fourier transforms in absolute values.
 
 ```{r funcs}
 
@@ -185,6 +185,6 @@ datatable(error_df)
 
 ```
 
-To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid choice, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
+To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid one, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
 
 
