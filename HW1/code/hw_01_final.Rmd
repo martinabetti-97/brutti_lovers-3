@@ -1,6 +1,6 @@
 ---
 title: "HOMEWORK 01"
-author: "brutti's lovers"
+author: "G01: Betti, D'Arrigo, Masci, Mata Naranjo"
 output: html_document
 ---
 
@@ -337,7 +337,7 @@ At this point of the analysis, we implement the splines' model and we apply it t
 
 ```{r load_data, message=FALSE, warning=FALSE}
 # ieri_domani -------------------------------------------------------------
-load("../data/ieri_domani.RData")
+load(".../data/ieri_domani.RData")
 head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=df$y.tomorrow))
 # Train/Test
 train <- data.frame(x = df$x, y = df$y.yesterday)
