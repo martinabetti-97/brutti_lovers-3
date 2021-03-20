@@ -315,8 +315,8 @@ fhat_func <- function(q, train_coef=train, predict_sample=train) {
 fhat_plot <- function(q, train) {
   y = train$y
   fhat <- fhat_func(q, train)
-  plot( y ~ x , train, lwd = 2, col = rgb(0.118, 0.565, 1, .6))
-  lines(fhat ~ x, train, lwd = 4, col = rgb(0.941, 0.502, 0.502, .8)) # change colors
+  plot( y ~ x , train, lwd = 2, col = rgb(.1, .1, .1, .6))
+  lines(fhat ~ x, train, lwd = 4, col = rgb(0.941, 0.502, 0.502, .8))
 }
 ```
 
@@ -328,7 +328,6 @@ fhat_plot(3, train)
 fhat_plot(5, train)
 fhat_plot(10, train)
 ```
-
 
 As the plots show, we may, at this point qualitatively, notice that as the number of knots increases, the fitted curve locally changes more rapidly, i.e. the variance of the model rises. It seems evident, for instance, that having $q=10$ leads to a model that overfits the data. <br> Nevertheless, a numeric evaluation is needed and thus we move forward analyzing first the $C_p$ of the models. 
 
@@ -356,27 +355,68 @@ plot(cp, type = 'b', lwd = 2, col = rgb(.1,.1,.1, .4), main = paste(expression(C
 ```
 
 
-It is important to bare in mind that, since $C_p = MSE_{Tr} + \frac{2\cdot\hat{\sigma}^2\cdot p}{n}$ looks at the Mean Squared Error on the training data, it leads to a large overoptimism.<br> Thus, cross-validation is a more reliable technique to select the optimal $q$ value; among the different `CV` flavors, `K-fold CV` and `LOOCV` have been selected for the purpose:
+It is important to bare in mind that, since $C_p = MSE_{Tr} + \frac{2\cdot\hat{\sigma}^2\cdot p}{n}$ looks at the Mean Squared Error on the training data, it leads to a large overoptimism: against evidence, the model having $q=10$ has the best $C_p$ value, as foreseeable.<br> Thus, cross-validation is a more reliable technique to select the optimal $q$ value; among the different `CV` flavors, `5-fold CV` and `LOOCV` have been selected for the purpose:
 
-```{r }
-k_fold_cv <- function(q, train, K=5) {
+```{r fig.width=10, fig.height=7}
+set.seed(123) # for reproducibility
+k_fold_cv <- function(q, train, K=5, predictor=fhat_func) {
   n = length(train$y)
   folds = sample(rep(1:K, length=n))
   kcv = sapply(1:K, function(k) {
     train_set = train[which(folds != k), ]
     test_set = train[which(folds == k), ]
     return(mean_squared_error(y_pred = test_set$y, 
-                              f_hat = fhat_func(q, train_coef = train_set, 
+                              f_hat = predictor(q, train_coef = train_set, 
                                                 predict_sample = test_set)))
   })
   return(mean(kcv))
 }
 
-cv <- sapply(q_vals, k_fold_cv, train=train, K=30)
+cv <- sapply(q_vals, k_fold_cv, train=train)
+loocv <- sapply(q_vals, k_fold_cv, train=train, K=length(train$y))
 
-plot(cv, type='b')
+cols <- c(rgb(.2, .05, .6, .5), rgb(.4, .2, .1, .5))
+plot(cv, lwd = 3, type = "b", col = cols[1], xlab = "Model", ylab = "CV")
+lines(loocv, lwd = 3, type = "b", col = cols[2])
+legend("topleft", legend = c("5-fold cross-validation", "leave-one-out cv"), 
+       col = cols, lty = 1, lwd = 3, cex = .8)
 ```
 
 
+Even though the values of the three metrics taken into account apparently disagree on the best model to pick, the value of the `5-fold CV` on $q=5$ pushes us to select this value as the optimal for $q$. Eventually, the best model on the data is $\hat{f}_{spline}(x; d=3, q=5)$.
+
 #### Question 4
+
+```{r original_poly, include=FALSE}
+set.seed(123)
+# poly fit
+poly_func <- function(d, train_coef=train, predict_sample=train) {
+  if (d == 0) beta = lm(y ~ 1, train) 
+  else beta = lm(y ~ poly(x, degree = d), train)
+  fhat <- predict(beta, newdata = list(x = predict_sample$x))
+  return('fhat' = fhat)
+}
+
+ftrue <- c(0.4342,0.4780,0.5072,0.5258,0.5369,0.5426,0.5447,0.5444,0.5425,0.5397,
+0.5364,0.5329,0.5294,0.5260,0.5229,0.5200,0.5174,0.5151,0.5131,0.5113,
+0.5097,0.5083,0.5071,0.5061,0.5052,0.5044,0.5037,0.5032,0.5027,0.5023)
+```
+
+In the end, we compare the best spline model $\hat{f}_{spline}(x; d=3, q=5)$ with the polynomial regression model $\hat{f}_{poly}(x; d=3)$ of degree 3 and the true data generating function.
+
+```{r final_plot, fig.width=10, fig.height=6, echo=FALSE}
+cols = c(rgb(0.941, 0.502, 0.502, .8), rgb(0.345, 0.502, 0.234, .6), rgb(.1, .1, .1, .4))
+fhat_plot(q = 3, train)
+lines(poly_func(d = 3) ~ x, train, lwd = 4, col = cols[2])
+lines(train$x, ftrue, lwd = 4, lty = 2, col = cols[3])
+legend("bottomright", legend = c("degree-3 regression spline", 
+                                 "degree-3 polynomial regression", 
+                                 "true function"), 
+       col = cols, lty = c(1,1,2), lwd = 3, cex = .8)
+```
+
+The degree-3 polynomial regression model shows a lower capacity than the spline, even though they share the same degree $d$. Thus, the advantages of the spline mentioned earlier are evident: the spline locally fits the data better, without the need of increasing the complexity of the polynomial. Quantitatively, the $MSE_{Te}$ of the spline is $MSE_{Te}(\hat{f}_{spline})=$ 
+`r options(scipen=10); mean_squared_error(test$y, fhat_func(3, predict_sample=test))`, whereas the one of the polynomial regressor is $MSE_{Te}(\hat{f}_{poly})=$ 
+`r options(scipen=10); mean_squared_error(test$y, poly_func(3, predict_sample=test))`.
+
 
