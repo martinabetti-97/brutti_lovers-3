@@ -10,30 +10,47 @@ library(DT)
 
 ```
 
-## Part 1 - Linear Algebra is good...
+<br><br>
 
+# Part 1 - Linear Algebra is good...
 
-#### Question 3.a.
+<br>
+
+### Question 3.a
+
+<br>
 
 We will try to explain this parallelism by first reviewing the logic used in the Transformed Feature Space.
 
 As we have seen in class, having a finite number of feature variables (for the sake of simplicity lets make this 1 and denote it by $x$), we could use them to predict another target variable (1 dimensional, $y$) through a linear combination as follows:
 
+<br>
+
 \begin{align}
-y = \beta_0 + \beta_1x
+y = \beta_0 \cdot \beta_1x
 \end{align}
+
+<br>
 
 Such model assumptions might not be sufficient to capture all the information in $y$ through this simple transformation (when projecting $y$ on the 1-dimensional space of $x$ we might lose too much information). For this reason, we might want to think of a more complex set of transformations we can apply on our feature $x$ in order to capture more details about the target variable. This can be accomplished through a function/transformation $\phi(x)$ such that:
 
+<br>
+
 \begin{align}
-y = \sum_{j=1}^n \beta_j + \phi_j(x)
+y = \sum_{j=1}^n \beta_j \cdot \phi_j(x)
 \end{align}
+
+<br>
 
 This is basically the same principle used in the series expansion in which we try to expand a function $m(x)$ (possibly complex) by adding up less complex and therefore easier to handle functions together:
 
+<br>
+
 \begin{align}
-m(x) = \sum_{j=1}^n \beta_j + \phi_j(x)
+m(x) = \sum_{j=1}^n \beta_j \cdot \phi_j(x)
 \end{align}
+
+<br>
 
 It is important to highlight that one of the basic reasons for which these two principles work (in the vector and function space) is because in both case it is possible to exploit the dot product property between the elements living in the respective spaces.
 
@@ -42,9 +59,13 @@ Finally, we would also like to highlight that very nice properties pop up in bot
 - Adding additional components to the sum would not change the previous $\beta_j$ values.
 - $\beta_j$ can be estimated using the Generalized Fourier Expansion, which in the limit tends to an interpolation function of y or $m(x)$.
 
-#### Question 3.b/c.
+<br><br><br>
 
-We know that a function $m(\cdot)$ can be approximated by less complex functions through a linear combination of Fourier coefficients. In order to find the best approximation we must define a system to work with. If we are in a Hilbert space $H$ with an orthonormal basis $\phi_j(x)$, the best approximant is the partial sums $m=\sum_{j=1}^J<m(x),\phi_j(x)>$, where $m(x)$ is just a linear, $J$ dimensional subspace of $H$. 
+### Question 3.b/c
+
+<br>
+
+We know that a function $m(\cdot)$ can be approximated by less complex functions through a linear combination of Fourier coefficients. In order to find the best approximation we must define a system to work with. If we are in a Hilbert space $H$ with an orthonormal basis $\phi_j(x)$, the best approximant is the partial sums $m=\sum_{j=1}^J\langle m(x),\phi_j(x)\rangle$, where $m(x)$ is just a linear, $J$ dimensional subspace of $H$. 
 
 However, to provide a better approximation error, it may be convenient to use a non-linear approximation of the form $m_J^*(x)$ to the Doppler function, which requires less Fourier coefficients (reducing the $||m||^2$).
 For a fixed $J$, $m_J^*(x)$ has the same cardinality (and therefore complexity) as $m_J(x)$, but in the non linear case the approximants $\{\beta_j\}^J_j$ come from different linear sub-spaces.
@@ -52,7 +73,11 @@ We know that, since the *Fourier* coefficients are the optimal choice to minimiz
 
 It is important to underline that this applies only to the extremely simple case of a Hilbert space with an orthonormal base, therefore we will consider a cosine basis.
 
+<br><br>
+
 ### Defining Cosine-basis and Doppler function scaled in [0,1]
+
+<br>
 
 ```{r setup}
 
@@ -61,7 +86,11 @@ doppler.fun <-  function(x) sqrt(x*(1 - x))*sin( (2.1*pi)/(x + 0.05))
 
 ```
 
+<br>
+
 Now we calculate the Fourier coefficients by integrating over the interval [0,1]. 
+
+<br>
 
 ```{r fourier coefficients}
 
@@ -78,7 +107,11 @@ for (idx in 0:j.max){
 
 ```
 
+<br>
+
 In the linear case we approximate our function by picking the first $m$ Fourier transforms. In the non-linear case we pick $m$ indices corresponding to the greater Fourier transforms in absolute values.
+
+<br>
 
 ```{r funcs}
 
@@ -105,7 +138,11 @@ J_nonlinear <- function(x, f.coeff = f.coeff, j.max){
 
 ```
 
+<br>
+
 Lastly we visualize some n-terms approximations of the Doppler function in the linear and non-linear case.
+
+<br>
 
 ```{r plots, fig.width=18, fig.height=10}
 
@@ -156,6 +193,8 @@ f_linear(f.coeff)
 f_nonlinear(f.coeff)
 ```
 
+<br>
+
 From the plots above we can clearly see that low $j$ capture the low resolution behavior of the Doppler function, while at high $j$, $\phi_j$ tends to describe the high resolution details.
 We can also clearly observe the effect of the inhomogeneous smoothness of the Doppler function on the approximation. In fact, also at small values of $j$, the smoother part of the function is already well approximated, while the high complexity of the function around the origin is hardly represented.
 
@@ -163,7 +202,9 @@ One more detail we can appreciate from this plots is that, after a certain $j$, 
 
 Here, we provide a plot to clarify this point.
 
-```{r check, fig.width=10, fig.height=5}
+<br>
+
+```{r check, fig.width=10, fig.height=6, fig.align='center'}
 
 plot(abs(f.coeff), ylab = 'Fourier coefficient (abs value)', 
      main='Coefficients captured by Linear Fourier Expansion')
@@ -175,7 +216,11 @@ abline(v = 100, lwd = 3,col = mycol[5])
 abline(v = 150, lwd = 3, col = mycol[6])
 ```
 
+<br><br>
+
 ### L2 -reconstruction error
+
+<br>
 
 ```{r bonus}
 
@@ -187,31 +232,64 @@ datatable(error_df)
 
 To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid one, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
 
+<br>
+---
+<br>
 
 ## Part 2: Polynomials are good...
 
-#### Question 1
+<br>
+
+### Question 1
+
+<br>
 
 As briefly explained at the beginning of this report, linear combinations of features in a transformed space allow to address the non-linearity of the data in the original space, defining powerful and flexible yet relatively simple models. Recall, once again, that a linear model is defined as
+
+<br>
+
 \begin{equation}
-    y = \sum_{j=1}^n \beta_j \cdot \phi_j(x)
-    \label{eq:linear_comb}
+    y = \sum_{j=1}^n \beta_j \cdot \phi_j(x) \hspace{1cm} (1)
 \end{equation}
-for certain $\phi_j : \mathbb{R}^p \to \mathbb{R}$ transformations. Polynomial regression, for instance, involves $\phi_j$ such that $\phi_j(x)=x^d$, for $d\in \{0,1,...,D\}$. Even though it provides a flexible representation for $y$, it is susceptible to data point variations and may incur in overfitting; moreover, it is inherently non-local, i.e. the value of $y$ at a certain point may affect the fit for data points very far away. In order to overcome these drawbacks, the interval the data belong to is divided into subintervals $(-\infty,\xi_1],[\xi_1,\xi_2],[\xi_2,\xi_3],...,[\xi_q,+\infty)$ and a polynomial is fitted in each of them: this is the roughly and high-level idea behind splines. $\{\xi_i\}_{i=1}^q$ are known as knots. Obviously, some additional constraints are required: degree-$d$ splines must be continuous and must have continuous derivatives at the knots up to $d-1$. This way, the overall obtained curve is well-shaped and continuous at each point and, by reducing the number of degrees of freedom, the complexity of the problem is also reduced. Finally, splines are such that
-\begin{equation*}
+
+<br>
+
+for certain $\phi_j : \mathbb{R}^p \mapsto \mathbb{R}$ transformations. Polynomial regression, for instance, involves $\phi_j$ such that $\phi_j(x)=x^d$, for $d\in \{0,1,...,D\}$. Even though it provides a flexible representation for $y$, it is susceptible to data point variations and may incur in overfitting; moreover, it is inherently non-local, i.e. the value of $y$ at a certain point may affect the fit for data points very far away. In order to overcome these drawbacks, the interval the data belong to is divided into subintervals $(-\infty,\xi_1],[\xi_1,\xi_2],[\xi_2,\xi_3],...,[\xi_q,+\infty)$ and a polynomial is fitted in each of them: this is the roughly and high-level idea behind splines. $\{\xi_i\}_{i=1}^q$ are known as knots. Obviously, some additional constraints are required: degree-$d$ splines must be continuous and must have continuous derivatives at the knots up to $d-1$. This way, the overall obtained curve is well-shaped and continuous at each point and, by reducing the number of degrees of freedom, the complexity of the problem is also reduced. Finally, splines are such that
+
+<br>
+
+$$
     f(x) = \sum_{j=1}^{(d+1)+q} \beta_j \cdot g_j(x),
-\end{equation*}
+$$
+
+<br>
+
 \noindent having $\mathcal{G}_{d,q}=\big\{g_1(x), ..., g_{d+1}(x), g_{(d+1)+1}(x), ..., g_{(d+1)+q}(x)\big\}$ the set of the $g_j$ transformation functions on the input data $x$ so that 
+
 $$\big\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^d\big\}$$
 and 
+
 $$\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$$
-Again, linearity in transformed feature space pops up.<br> Pushing the analysis a step further, it is worth to mention that (\ref{eq:linear_comb}) is a linear basis expansion in $x$. Then, we may notice that both splines and series expansion exploit the same notion: linear basis. Although the solution the two methods come up with is somewhat similar, the difference lies in the way it is reached. Indeed, splines divide the interval, generically say $[a,b]$, into subintervals and the approximation of the (unknown) data generating function $m(\cdot)$ is tuned by changing the number of knots, i.e. analyzing more locally the behavior of the function, and by changing the degree $d$ of the polynomial, i.e. changing the basis; on the other hand, series expansions look at the whole interval $[a,b]$ and control the approximation by varying the number $J$ of terms after which the series is truncated; they leverage the properties of the Hilbert space.
+Again, linearity in transformed feature space pops up.
+Pushing the analysis a step further, it is worth to mention that *(1)* is a linear basis expansion in $x$. Then, we may notice that both splines and series expansion exploit the same notion: linear basis. Although the solution the two methods come up with is somewhat similar, the difference lies in the way it is reached. Indeed, splines divide the interval, generically say $[a,b]$, into subintervals and the approximation of the (unknown) data generating function $m(\cdot)$ is tuned by changing the number of knots, i.e. analyzing more locally the behavior of the function, and by changing the degree $d$ of the polynomial, i.e. changing the basis; on the other hand, series expansions look at the whole interval $[a,b]$ and control the approximation by varying the number $J$ of terms after which the series is truncated; they leverage the properties of the Hilbert space.
 
+<br><br>
 
-#### Question 2
+### Question 2
 
-```{r spline_plots, echo=FALSE, fig.width=10, fig.height=6}
+<br>
+
+We plot some of the elements of $\mathcal{G}_{d,q}$ with $q\in\{1,3,5\}$ and $d\in\{3,5,10\}$ equispaced knots in the interval $[0,1]$. The visualized elements are chosen randomly.
+
+<br>
+
+```{r include=FALSE, warning=FALSE, message=FALSE}
+library(latex2exp)
+set.seed(123)
 par(mfrow = c(1,1))
+```
+
+```{r spline_plots, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
 #function that shows n functions belonging to G, truncated power functions
 #of order d over q knots
 g <- function(q=3, d=1, n=3){
@@ -230,13 +308,27 @@ g <- function(q=3, d=1, n=3){
     j <- j + 1
     if (i <= d + 1){
       #functions in the first half, they are simply x to the power of something
-      if (j == 1) {curve(x^(i-1), from = 0, to = 1, col = mycol[j], ylim = (0:1), lwd = 4, ylab = expression(x^{i-1}))
-      } else {curve(x^(i-1), from = 0, to = 1, add = TRUE, col = mycol[j], ylab = expression(x^{i-1}), lwd = 4)}
+      if (j == 1) {
+        curve(x^(i-1), from = 0, to = 1, col = mycol[j], ylim = (0:1), xlim = c(0, 1.05), 
+              lwd = 4, main = TeX("Some elements of \\mathit{G}_{d,q}"),
+              xlab = "Basis", ylab = "y")
+        text(1.04, (1)^(i-1), labels = TeX(paste0("$x^{",i-1,"}$")))
+      } else {
+        curve(x^(i-1), from = 0, to = 1, add = TRUE, col = mycol[j], lwd = 4)
+        text(1.04, (1)^(i-1), labels = TeX(paste0("$x^{",i-1,"}$")))
+      }
       
     } else {
       #functions in the second half, the difference between x and knot, to the power of something
-      if (j == 1) {curve(((x-knots[i-q])^(d)), from = 0, to = 1, col = mycol[j], ylim = (0:1), ylab = expression((x-xi)^d), lwd = 4)
-      } else {curve((x-knots[i-q])^(d), from = 0, to = 1, add = TRUE, col = mycol[j], ylab = expression((x-xi)^d), lwd = 4)}
+      if (j == 1) {
+        curve(((x-knots[i-q])^(d)), from = 0, to = 1, col = mycol[j], ylim = (0:1), xlim = c(0, 1.05), 
+              lwd = 4, main = TeX("Some elements of \\mathit{G}_{d,q}"),
+              xlab = "Basis", ylab = "y")
+        text(1.04, (1-knots[i-q])^(d), labels = TeX(paste0("$(x-\\xi_{",i-q,"})^",d,"$")))
+      } else {
+        curve((x-knots[i-q])^(d), from = 0, to = 1, add = TRUE, col = mycol[j], lwd = 4)
+        text(1.04, (1-knots[i-q])^(d), labels = TeX(paste0("$(x-\\xi_{",i-q,"})^",d,"$")))
+      }
     }
   }
 }
@@ -246,33 +338,44 @@ g <- function(q=3, d=1, n=3){
 g(4,3,4)
 ```
 
+<br>
 
-#### Question 3
+having $\xi_1=0.2$, $\xi_2=0.4$, $\xi_3=0.6$, $\xi_4=0.8$.
 
-At this point of the analysis, we implement the splines' model and we apply it to the data `ieri_domani`. First, we load the data
+<br><br>
 
-```{r load_data, echo=FALSE, message=FALSE, warning=FALSE}
+### Question 3
+
+<br>
+
+At this point of the analysis, we implement the splines' model and we apply it to the data `ieri_domani`. First, we load the data:
+
+<br>
+
+```{r load_data, message=FALSE, warning=FALSE}
 # ieri_domani -------------------------------------------------------------
 
 load("../data/ieri_domani.RData")
-str(df)
-head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=NA))
+head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=df$y.tomorrow))
 
 # Train/Test
 train <- data.frame(x = df$x, y = df$y.yesterday)
 test  <- data.frame(x = df$x, y = df$y.tomorrow)
 ```
 
+<br>
 
-Recalling the definition of splines provided above, a crucial step is to build the design matrix $\mathbb{X}$ which we are going to work on. Formally, it is defined as 
+Recalling the definition of splines provided above, a crucial step is to build the design matrix $\mathbb{X}$ which we are going to work on. Formally, it is defined as:
 
 $$
 \mathbb{X}_{i,j} = g_j(x_i) \hspace{5mm} \text{for} \hspace{2mm} i\in\{1,...n\} \hspace{2mm} \text{and} \hspace{2mm} j\in\{1,...,(d+1)+q\}
 $$
 
-We may notice that in defining the splines, just the set of functions $\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$ depends on the number of knots $q$, while the set $\big\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^d\big\}$ is fixed once $d$ is fixed. Hence, having $d=3$, a function can compute the general matrix on the common basis, leaving to another function the task of computing the variable part, as in the following:
+We may notice that, in defining the splines, just the set of functions $\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$ depends on the number of knots $q$, while the set $\big\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^d\big\}$ is fixed once $d$ is fixed. Hence, having $d=3$, a function can compute the general matrix on the common basis, leaving to another function the task of computing the variable part, as in the following:
 
-```{r}
+<br>
+
+```{r design_mat}
 # First step is to generate the 3 functions we will be fitting our training data over
 # For this purpose we are given 2 parameters in each case: (d=3, q=3), (d=3, q=5), 
 # (d=3, q=10)
@@ -302,7 +405,11 @@ create_matrix <- function(q, train) {
 ```
 
 
+<br>
+
 By means of the functions below, the values of the coefficients $\{\beta\}_j$ are determined and the fitted regression splines $\hat{f}_j$ are obtained:
+
+<br>
 
 ```{r fhat}
 fhat_func <- function(q, train_coef=train, predict_sample=train) {
@@ -315,23 +422,31 @@ fhat_func <- function(q, train_coef=train, predict_sample=train) {
 fhat_plot <- function(q, train) {
   y = train$y
   fhat <- fhat_func(q, train)
-  plot( y ~ x , train, lwd = 2, col = rgb(.1, .1, .1, .6))
+  plot( y ~ x , train, lwd = 2, col = rgb(.1, .1, .1, .6), main = paste("Degree-3 spline with q=", q, sep=""))
   lines(fhat ~ x, train, lwd = 4, col = rgb(0.941, 0.502, 0.502, .8))
 }
 ```
 
-Before going any further, it is worth to have a visual evaluation of the splines models as the number of knots $q$ varies in the set $\{3,5,10\}$:
+<br>
 
-```{r fhat_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=10}
+Before going any further, it is worth to have a visual evaluation of the spline models as the number of knots $q$ varies in the set $\{3,5,10\}$:
+
+<br>
+
+```{r fhat_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=10, fig.align='center'}
 par(mfrow=c(2,2))
 fhat_plot(3, train)
 fhat_plot(5, train)
 fhat_plot(10, train)
 ```
 
+<br>
+
 As the plots show, we may, at this point qualitatively, notice that as the number of knots increases, the fitted curve locally changes more rapidly, i.e. the variance of the model rises. It seems evident, for instance, that having $q=10$ leads to a model that overfits the data. <br> Nevertheless, a numeric evaluation is needed and thus we move forward analyzing first the $C_p$ of the models. 
 
-```{r cp}
+<br>
+
+```{r cp, fig.width=10, fig.height=6, fig.align='center'}
 mean_squared_error <- function(y_pred, f_hat) mean((y_pred-f_hat)^2)
 
 q_3 <- fhat_func(3, train_coef=train, predict_sample=train)
@@ -350,15 +465,22 @@ for (i in 1:3) {
   cp[i] = MSE_val + second_term
 }
 
-plot(cp, type = 'b', lwd = 2, col = rgb(.1,.1,.1, .4), main = paste(expression(C_p), "of the models"), 
-     xlab = "Model", ylab = expression(C_p))
+plot(cp, type = 'b', lwd = 2, col = rgb(.1,.1,.1, .4), main = expression(paste("C"[p], " of the models")), 
+     xlab = "Model", ylab = expression(C[p]), xaxt = "none", xlim=c(1, 3.2))
+for(i in 1:3) text(i+.1, cp[i], labels = paste("q=", q_vals[i], sep = ""))
 ```
 
+<br>
 
 It is important to bare in mind that, since $C_p = MSE_{Tr} + \frac{2\cdot\hat{\sigma}^2\cdot p}{n}$ looks at the Mean Squared Error on the training data, it leads to a large overoptimism: against evidence, the model having $q=10$ has the best $C_p$ value, as foreseeable.<br> Thus, cross-validation is a more reliable technique to select the optimal $q$ value; among the different `CV` flavors, `5-fold CV` and `LOOCV` have been selected for the purpose:
 
-```{r fig.width=10, fig.height=7}
+<br>
+
+```{r include=FALSE}
 set.seed(123) # for reproducibility
+```
+
+```{r fig.width=10, fig.height=7, fig.align='center'}
 k_fold_cv <- function(q, train, K=5, predictor=fhat_func) {
   n = length(train$y)
   folds = sample(rep(1:K, length=n))
@@ -376,16 +498,22 @@ cv <- sapply(q_vals, k_fold_cv, train=train)
 loocv <- sapply(q_vals, k_fold_cv, train=train, K=length(train$y))
 
 cols <- c(rgb(.2, .05, .6, .5), rgb(.4, .2, .1, .5))
-plot(cv, lwd = 3, type = "b", col = cols[1], xlab = "Model", ylab = "CV")
+plot(cv, lwd = 3, type = "b", col = cols[1], main = "CV and LOOCV of the models", 
+     xlab = "Model", ylab = "CV", xlim = c(1,3.2), xaxt = "none")
+for(i in 1:3) text(i+.1, cv[i], labels = paste("q=", q_vals[i], sep = ""))
 lines(loocv, lwd = 3, type = "b", col = cols[2])
+for(i in 1:3) text(i+.1, loocv[i], labels = paste("q=", q_vals[i], sep = ""))
 legend("topleft", legend = c("5-fold cross-validation", "leave-one-out cv"), 
        col = cols, lty = 1, lwd = 3, cex = .8)
 ```
 
+<br>
 
-Even though the values of the three metrics taken into account apparently disagree on the best model to pick, the value of the `5-fold CV` on $q=5$ pushes us to select this value as the optimal for $q$. Eventually, the best model on the data is $\hat{f}_{spline}(x; d=3, q=5)$.
+The values of the `5-fold CV` and `LOOCV` reward $q=3$, which is selected as the optimal value for $q$. Eventually, the best model on the data is $\hat{f}_{spline}(x; d=3, q=3)$.
 
-#### Question 4
+<br><br>
+
+### Question 4
 
 ```{r original_poly, include=FALSE}
 set.seed(123)
@@ -402,9 +530,13 @@ ftrue <- c(0.4342,0.4780,0.5072,0.5258,0.5369,0.5426,0.5447,0.5444,0.5425,0.5397
 0.5097,0.5083,0.5071,0.5061,0.5052,0.5044,0.5037,0.5032,0.5027,0.5023)
 ```
 
-In the end, we compare the best spline model $\hat{f}_{spline}(x; d=3, q=5)$ with the polynomial regression model $\hat{f}_{poly}(x; d=3)$ of degree 3 and the true data generating function.
+<br>
 
-```{r final_plot, fig.width=10, fig.height=6, echo=FALSE}
+In the end, we compare the best spline model $\hat{f}_{spline}(x; d=3, q=3)$ with the polynomial regression model $\hat{f}_{poly}(x; d=3)$ of degree 3 and the true data generating function.
+
+<br>
+
+```{r final_plot, fig.width=10, fig.height=6, echo=FALSE, fig.align='center'}
 cols = c(rgb(0.941, 0.502, 0.502, .8), rgb(0.345, 0.502, 0.234, .6), rgb(.1, .1, .1, .4))
 fhat_plot(q = 3, train)
 lines(poly_func(d = 3) ~ x, train, lwd = 4, col = cols[2])
@@ -415,8 +547,10 @@ legend("bottomright", legend = c("degree-3 regression spline",
        col = cols, lty = c(1,1,2), lwd = 3, cex = .8)
 ```
 
+<br>
+
 The degree-3 polynomial regression model shows a lower capacity than the spline, even though they share the same degree $d$. Thus, the advantages of the spline mentioned earlier are evident: the spline locally fits the data better, without the need of increasing the complexity of the polynomial. Quantitatively, the $MSE_{Te}$ of the spline is $MSE_{Te}(\hat{f}_{spline})=$ 
-`r options(scipen=10); mean_squared_error(test$y, fhat_func(3, predict_sample=test))`, whereas the one of the polynomial regressor is $MSE_{Te}(\hat{f}_{poly})=$ 
+`r options(scipen=10); mean_squared_error(test$y, fhat_func(3, predict_sample=test))`, whereas the one of the polynomial predictor is $MSE_{Te}(\hat{f}_{poly})=$ 
 `r options(scipen=10); mean_squared_error(test$y, poly_func(3, predict_sample=test))`.
 
-
+<br><br>
