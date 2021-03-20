@@ -1,13 +1,12 @@
 ---
 title: "HOMEWORK 01"
+author: "brutti's lovers"
 output: html_document
 ---
 
 ```{r library, echo=FALSE, message=FALSE, warning=FALSE}
-
 require(viridis) 
 library(DT)
-
 ```
 
 <br><br>
@@ -80,10 +79,8 @@ It is important to underline that this applies only to the extremely simple case
 <br>
 
 ```{r setup}
-
 cos.basis = function(x, j) 1*(j == 0) + sqrt(2)*cos(pi*j*x)*(j > 0)
 doppler.fun <-  function(x) sqrt(x*(1 - x))*sin( (2.1*pi)/(x + 0.05))
-
 ```
 
 <br>
@@ -93,10 +90,8 @@ Now we calculate the Fourier coefficients by integrating over the interval [0,1]
 <br>
 
 ```{r fourier coefficients}
-
 j.max   <- 200
 f.coeff <- rep(NA, j.max+1)
-
 for (idx in 0:j.max){
   foo = tryCatch(
     integrate(function(x, j) doppler.fun(x) * cos.basis(x,j), lower = 0, upper = 1, j = idx)$value,
@@ -104,7 +99,6 @@ for (idx in 0:j.max){
   )
   f.coeff[idx + 1] = foo
 }
-
 ```
 
 <br>
@@ -114,10 +108,8 @@ In the linear case we approximate our function by picking the first $m$ Fourier 
 <br>
 
 ```{r funcs}
-
 # sorting indexes of Fourier transform
 idx_sorted <- sort(abs(f.coeff), decreasing = T, index.return = T)$ix
-
 # Linear
 J_linear <- function(x, f.coeff = f.coeff, j.max){
   out = rep(0, length(x))
@@ -126,7 +118,6 @@ J_linear <- function(x, f.coeff = f.coeff, j.max){
   }
   return(out)
 }
-
 # Non linear
 J_nonlinear <- function(x, f.coeff = f.coeff, j.max){
   out = rep(0, length(x))
@@ -135,7 +126,6 @@ J_nonlinear <- function(x, f.coeff = f.coeff, j.max){
   }
   return(out)
 }
-
 ```
 
 <br>
@@ -145,14 +135,11 @@ Lastly we visualize some n-terms approximations of the Doppler function in the l
 <br>
 
 ```{r plots, fig.width=18, fig.height=10}
-
 par(mfrow = c(2,3))
 j.seq = c(5, 10, 25, 50, 100, 150)
 mycol = viridis(length(j.seq), alpha = .7)
-
 # Linear
 error_linear = c()
-
 f_linear <- function(f.coeff){
   for (idx in 1:length(j.seq)){
      
@@ -162,17 +149,13 @@ f_linear <- function(f.coeff){
     
     curve(J_linear(x, f.coeff = f.coeff , j.seq[idx]),
           n = 1001, col = mycol[idx], lwd = 5,add = TRUE)
-
     error_linear <<- c(error_linear, sqrt(integrate(function(x) 
     (doppler.fun(x) - J_linear(x, f.coeff = f.coeff, j.max = j.seq[idx]) )^2, 
     lower = 0, upper = 1)$value))
     }
 }
-
-
 # Non linear
 error_nonlinear = c()
-
 f_nonlinear <- function(f.coeff){
   for (idx in 1:length(j.seq)){
     
@@ -188,7 +171,6 @@ f_nonlinear <- function(f.coeff){
       lower = 0, upper = 1)$value))
   }
 }
-
 f_linear(f.coeff)
 f_nonlinear(f.coeff)
 ```
@@ -205,7 +187,6 @@ Here, we provide a plot to clarify this point.
 <br>
 
 ```{r check, fig.width=10, fig.height=6, fig.align='center'}
-
 plot(abs(f.coeff), ylab = 'Fourier coefficient (abs value)', 
      main='Coefficients captured by Linear Fourier Expansion')
 abline(v = 5, lwd = 3, col = mycol[1])
@@ -223,11 +204,9 @@ abline(v = 150, lwd = 3, col = mycol[6])
 <br>
 
 ```{r bonus}
-
 error_df <- data.frame(error_linear, error_nonlinear)
 rownames(error_df) <- j.seq
 datatable(error_df)
-
 ```
 
 To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid one, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
@@ -279,7 +258,15 @@ Pushing the analysis a step further, it is worth to mention that *(1)* is a line
 
 <br>
 
-We plot some of the elements of $\mathcal{G}_{d,q}$ with $q\in\{1,3,5\}$ and $d\in\{3,5,10\}$ equispaced knots in the interval $[0,1]$. The visualized elements are chosen randomly.
+We plot some of the elements of $\mathcal{G}_{d,q}$, given by the formula:
+\begin{align}
+\mathcal{G}_{d,q} = \{g_1(x), ..., g_{d+1}(x), g_{(d+1)+1}(x), ..., g_{(d+1)+q}(x)\}
+\end{align}
+where:
+\begin{align} \{g_1(x) = 1, g_2(x) = x, ..., g_{d+1}(x) = x^d\} \end{align}
+\begin{align} \{g_{(d+1)+j}(x) = (x - \xi_j)_+^d\}_{j=1}^q \end{align}
+
+The elements we want to plot are those having $q\in\{1,3,5\}$ and $d\in\{3,5,10\}$, with equispaced knots in the interval $[0,1]$. The visualized elements are chosen randomly.
 
 <br>
 
@@ -290,24 +277,19 @@ par(mfrow = c(1,1))
 ```
 
 ```{r spline_plots, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
-#function that shows n functions belonging to G, truncated power functions
-#of order d over q knots
 g <- function(q=3, d=1, n=3){
-  #first of all we define the knots and define the colours of the functions
   knots <- seq(0,1, by =  1/(q+1))
   knots <- knots[1:q+1]
   mycol <- viridis(length(knots))
   
-  #then we define the cardinality and select which functions we will plot
   card_G <- d+q+1
   chosen_funcs <- sample(x = 1:card_G, replace = FALSE, size = n)
   
-  #next we plot each function
+  #plot of each chose function
   j <- 0
   for (i in chosen_funcs) {
     j <- j + 1
     if (i <= d + 1){
-      #functions in the first half, they are simply x to the power of something
       if (j == 1) {
         curve(x^(i-1), from = 0, to = 1, col = mycol[j], ylim = (0:1), xlim = c(0, 1.05), 
               lwd = 4, main = TeX("Some elements of \\mathit{G}_{d,q}"),
@@ -319,7 +301,6 @@ g <- function(q=3, d=1, n=3){
       }
       
     } else {
-      #functions in the second half, the difference between x and knot, to the power of something
       if (j == 1) {
         curve(((x-knots[i-q])^(d)), from = 0, to = 1, col = mycol[j], ylim = (0:1), xlim = c(0, 1.05), 
               lwd = 4, main = TeX("Some elements of \\mathit{G}_{d,q}"),
@@ -332,9 +313,11 @@ g <- function(q=3, d=1, n=3){
     }
   }
 }
+```
 
-#i think plotting with these numbers is the best option, we get many functions
-#and they all appear pretty clear
+The function takes as input the number of knots, the order of the power functions and the number of total functions we want to show in the final graph. In the following example, we see 4 random functions belonging to the family of functions defined above, with $q=4$ and $d=3$:
+
+```{r}
 g(4,3,4)
 ```
 
@@ -354,10 +337,8 @@ At this point of the analysis, we implement the splines' model and we apply it t
 
 ```{r load_data, message=FALSE, warning=FALSE}
 # ieri_domani -------------------------------------------------------------
-
 load("../data/ieri_domani.RData")
 head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=df$y.tomorrow))
-
 # Train/Test
 train <- data.frame(x = df$x, y = df$y.yesterday)
 test  <- data.frame(x = df$x, y = df$y.tomorrow)
@@ -380,11 +361,8 @@ We may notice that, in defining the splines, just the set of functions $\big\{g_
 # For this purpose we are given 2 parameters in each case: (d=3, q=3), (d=3, q=5), 
 # (d=3, q=10)
 q_vals = c(3, 5, 10)
-
 d = 3
-
 # Generate the part of the general design matrix that is common to all
-
 generate_gdm_func <- function(train) {
   general_design_matrix = matrix(NA, nrow = nrow(train), ncol = (d+1))
   general_design_matrix[,1] = 1
@@ -393,7 +371,6 @@ generate_gdm_func <- function(train) {
   general_design_matrix[,4] = (train$x)^3
   return(general_design_matrix)
 }
-
 create_matrix <- function(q, train) {
   design_matrix = matrix(NA, nrow = nrow(train), ncol = q)
   knots = quantile(train$x, probs = seq(0, 1, length.out = q+2))[1:q+1]
@@ -418,12 +395,12 @@ fhat_func <- function(q, train_coef=train, predict_sample=train) {
   fhat <- predict(beta, newdata = list(x = predict_sample$x))
   return ('fhat' = fhat)
 }
-
-fhat_plot <- function(q, train) {
+mycol <- viridis(3)
+fhat_plot <- function(q, train, i) {
   y = train$y
   fhat <- fhat_func(q, train)
-  plot( y ~ x , train, lwd = 2, col = rgb(.1, .1, .1, .6), main = paste("Degree-3 spline with q=", q, sep=""))
-  lines(fhat ~ x, train, lwd = 4, col = rgb(0.941, 0.502, 0.502, .8))
+  plot( y ~ x , train, lwd = 2, cex = .5, main = paste("Degree-3 spline with q=", q, sep=""))
+  lines(fhat ~ x, train, lwd = 4, col = mycol[i])
 }
 ```
 
@@ -434,10 +411,10 @@ Before going any further, it is worth to have a visual evaluation of the spline 
 <br>
 
 ```{r fhat_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=10, fig.align='center'}
-par(mfrow=c(2,2))
-fhat_plot(3, train)
-fhat_plot(5, train)
-fhat_plot(10, train)
+par(mfrow=c(3,1))
+fhat_plot(3, train,1)
+fhat_plot(5, train,2)
+fhat_plot(10, train,3)
 ```
 
 <br>
@@ -448,14 +425,11 @@ As the plots show, we may, at this point qualitatively, notice that as the numbe
 
 ```{r cp, fig.width=10, fig.height=6, fig.align='center'}
 mean_squared_error <- function(y_pred, f_hat) mean((y_pred-f_hat)^2)
-
 q_3 <- fhat_func(3, train_coef=train, predict_sample=train)
 q_5 <- fhat_func(5, train_coef=train, predict_sample=train)
 q_10 <-fhat_func(10, train_coef=train, predict_sample=train)
-
 fhats = list(q_3, q_5, q_10)
 cp = rep(NA, 3)
-
 for (i in 1:3) {
   MSE_val = mean_squared_error(y_pred = train$y, f_hat = fhats[[i]])
   p = 4+q_vals[i]
@@ -464,7 +438,6 @@ for (i in 1:3) {
   second_term = 2*sigma_hat*(p/n)
   cp[i] = MSE_val + second_term
 }
-
 plot(cp, type = 'b', lwd = 2, col = rgb(.1,.1,.1, .4), main = expression(paste("C"[p], " of the models")), 
      xlab = "Model", ylab = expression(C[p]), xaxt = "none", xlim=c(1, 3.2))
 for(i in 1:3) text(i+.1, cp[i], labels = paste("q=", q_vals[i], sep = ""))
@@ -493,10 +466,8 @@ k_fold_cv <- function(q, train, K=5, predictor=fhat_func) {
   })
   return(mean(kcv))
 }
-
 cv <- sapply(q_vals, k_fold_cv, train=train)
 loocv <- sapply(q_vals, k_fold_cv, train=train, K=length(train$y))
-
 cols <- c(rgb(.2, .05, .6, .5), rgb(.4, .2, .1, .5))
 plot(cv, lwd = 3, type = "b", col = cols[1], main = "CV and LOOCV of the models", 
      xlab = "Model", ylab = "CV", xlim = c(1,3.2), xaxt = "none")
@@ -524,7 +495,6 @@ poly_func <- function(d, train_coef=train, predict_sample=train) {
   fhat <- predict(beta, newdata = list(x = predict_sample$x))
   return('fhat' = fhat)
 }
-
 ftrue <- c(0.4342,0.4780,0.5072,0.5258,0.5369,0.5426,0.5447,0.5444,0.5425,0.5397,
 0.5364,0.5329,0.5294,0.5260,0.5229,0.5200,0.5174,0.5151,0.5131,0.5113,
 0.5097,0.5083,0.5071,0.5061,0.5052,0.5044,0.5037,0.5032,0.5027,0.5023)
@@ -537,14 +507,13 @@ In the end, we compare the best spline model $\hat{f}_{spline}(x; d=3, q=3)$ wit
 <br>
 
 ```{r final_plot, fig.width=10, fig.height=6, echo=FALSE, fig.align='center'}
-cols = c(rgb(0.941, 0.502, 0.502, .8), rgb(0.345, 0.502, 0.234, .6), rgb(.1, .1, .1, .4))
-fhat_plot(q = 3, train)
-lines(poly_func(d = 3) ~ x, train, lwd = 4, col = cols[2])
-lines(train$x, ftrue, lwd = 4, lty = 2, col = cols[3])
+fhat_plot(q = 3, train, 1)
+lines(poly_func(d = 3) ~ x, train, lwd = 4, col = mycol[2])
+lines(train$x, ftrue, lwd = 4, lty = 2, col = mycol[3])
 legend("bottomright", legend = c("degree-3 regression spline", 
                                  "degree-3 polynomial regression", 
                                  "true function"), 
-       col = cols, lty = c(1,1,2), lwd = 3, cex = .8)
+       col = mycol, lty = c(1,1,2), lwd = 3, cex = .8)
 ```
 
 <br>
