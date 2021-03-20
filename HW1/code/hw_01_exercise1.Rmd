@@ -10,7 +10,7 @@ library(DT)
 
 ```
 
-### Part 1 - Linear Algebra is good...
+## Part 1 - Linear Algebra is good...
 
 
 #### Question 3.a.
@@ -187,4 +187,196 @@ datatable(error_df)
 
 To conclude, the choice of considering the $j$ greatest values of $\beta$ seems to be a valid one, since the information that we are missing is probably not significantly relevant for the approximation. In order to have a better grasp on how the two approaches for approximation behave, we finally have a look at the *L2-reconstruction error* of both the linear and non-linear case.
 
+
+## Part 2: Polynomials are good...
+
+#### Question 1
+
+As briefly explained at the beginning of this report, linear combinations of features in a transformed space allow to address the non-linearity of the data in the original space, defining powerful and flexible yet relatively simple models. Recall, once again, that a linear model is defined as
+\begin{equation}
+    y = \sum_{j=1}^n \beta_j \cdot \phi_j(x)
+    \label{eq:linear_comb}
+\end{equation}
+for certain $\phi_j : \mathbb{R}^p \to \mathbb{R}$ transformations. Polynomial regression, for instance, involves $\phi_j$ such that $\phi_j(x)=x^d$, for $d\in \{0,1,...,D\}$. Even though it provides a flexible representation for $y$, it is susceptible to data point variations and may incur in overfitting; moreover, it is inherently non-local, i.e. the value of $y$ at a certain point may affect the fit for data points very far away. In order to overcome these drawbacks, the interval the data belong to is divided into subintervals $(-\infty,\xi_1],[\xi_1,\xi_2],[\xi_2,\xi_3],...,[\xi_q,+\infty)$ and a polynomial is fitted in each of them: this is the roughly and high-level idea behind splines. $\{\xi_i\}_{i=1}^q$ are known as knots. Obviously, some additional constraints are required: degree-$d$ splines must be continuous and must have continuous derivatives at the knots up to $d-1$. This way, the overall obtained curve is well-shaped and continuous at each point and, by reducing the number of degrees of freedom, the complexity of the problem is also reduced. Finally, splines are such that
+\begin{equation*}
+    f(x) = \sum_{j=1}^{(d+1)+q} \beta_j \cdot g_j(x),
+\end{equation*}
+\noindent having $\mathcal{G}_{d,q}=\big\{g_1(x), ..., g_{d+1}(x), g_{(d+1)+1}(x), ..., g_{(d+1)+q}(x)\big\}$ the set of the $g_j$ transformation functions on the input data $x$ so that 
+$$\big\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^d\big\}$$
+and 
+$$\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$$
+Again, linearity in transformed feature space pops up.<br> Pushing the analysis a step further, it is worth to mention that (\ref{eq:linear_comb}) is a linear basis expansion in $x$. Then, we may notice that both splines and series expansion exploit the same notion: linear basis. Although the solution the two methods come up with is somewhat similar, the difference lies in the way it is reached. Indeed, splines divide the interval, generically say $[a,b]$, into subintervals and the approximation of the (unknown) data generating function $m(\cdot)$ is tuned by changing the number of knots, i.e. analyzing more locally the behavior of the function, and by changing the degree $d$ of the polynomial, i.e. changing the basis; on the other hand, series expansions look at the whole interval $[a,b]$ and control the approximation by varying the number $J$ of terms after which the series is truncated; they leverage the properties of the Hilbert space.
+
+
+#### Question 2
+
+```{r spline_plots, echo=FALSE, fig.width=10, fig.height=6}
+par(mfrow = c(1,1))
+#function that shows n functions belonging to G, truncated power functions
+#of order d over q knots
+g <- function(q=3, d=1, n=3){
+  #first of all we define the knots and define the colours of the functions
+  knots <- seq(0,1, by =  1/(q+1))
+  knots <- knots[1:q+1]
+  mycol <- viridis(length(knots))
+  
+  #then we define the cardinality and select which functions we will plot
+  card_G <- d+q+1
+  chosen_funcs <- sample(x = 1:card_G, replace = FALSE, size = n)
+  
+  #next we plot each function
+  j <- 0
+  for (i in chosen_funcs) {
+    j <- j + 1
+    if (i <= d + 1){
+      #functions in the first half, they are simply x to the power of something
+      if (j == 1) {curve(x^(i-1), from = 0, to = 1, col = mycol[j], ylim = (0:1), lwd = 4, ylab = expression(x^{i-1}))
+      } else {curve(x^(i-1), from = 0, to = 1, add = TRUE, col = mycol[j], ylab = expression(x^{i-1}), lwd = 4)}
+      
+    } else {
+      #functions in the second half, the difference between x and knot, to the power of something
+      if (j == 1) {curve(((x-knots[i-q])^(d)), from = 0, to = 1, col = mycol[j], ylim = (0:1), ylab = expression((x-xi)^d), lwd = 4)
+      } else {curve((x-knots[i-q])^(d), from = 0, to = 1, add = TRUE, col = mycol[j], ylab = expression((x-xi)^d), lwd = 4)}
+    }
+  }
+}
+
+#i think plotting with these numbers is the best option, we get many functions
+#and they all appear pretty clear
+g(4,3,4)
+```
+
+
+#### Question 3
+
+At this point of the analysis, we implement the splines' model and we apply it to the data `ieri_domani`. First, we load the data
+
+```{r load_data, echo=FALSE, message=FALSE, warning=FALSE}
+# ieri_domani -------------------------------------------------------------
+
+load("../data/ieri_domani.RData")
+str(df)
+head(data.frame(x.train = df$x, y.train = df$y.yesterday, x.test = df$x, y.test=NA))
+
+# Train/Test
+train <- data.frame(x = df$x, y = df$y.yesterday)
+test  <- data.frame(x = df$x, y = df$y.tomorrow)
+```
+
+
+Recalling the definition of splines provided above, a crucial step is to build the design matrix $\mathbb{X}$ which we are going to work on. Formally, it is defined as 
+
+$$
+\mathbb{X}_{i,j} = g_j(x_i) \hspace{5mm} \text{for} \hspace{2mm} i\in\{1,...n\} \hspace{2mm} \text{and} \hspace{2mm} j\in\{1,...,(d+1)+q\}
+$$
+
+We may notice that in defining the splines, just the set of functions $\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$ depends on the number of knots $q$, while the set $\big\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^d\big\}$ is fixed once $d$ is fixed. Hence, having $d=3$, a function can compute the general matrix on the common basis, leaving to another function the task of computing the variable part, as in the following:
+
+```{r}
+# First step is to generate the 3 functions we will be fitting our training data over
+# For this purpose we are given 2 parameters in each case: (d=3, q=3), (d=3, q=5), 
+# (d=3, q=10)
+q_vals = c(3, 5, 10)
+
+d = 3
+
+# Generate the part of the general design matrix that is common to all
+
+generate_gdm_func <- function(train) {
+  general_design_matrix = matrix(NA, nrow = nrow(train), ncol = (d+1))
+  general_design_matrix[,1] = 1
+  general_design_matrix[,2] = train$x
+  general_design_matrix[,3] = (train$x)^2
+  general_design_matrix[,4] = (train$x)^3
+  return(general_design_matrix)
+}
+
+create_matrix <- function(q, train) {
+  design_matrix = matrix(NA, nrow = nrow(train), ncol = q)
+  knots = quantile(train$x, probs = seq(0, 1, length.out = q+2))[1:q+1]
+  for (i in 1:q) {
+    design_matrix[,i] = (pmax(0, train$x-knots[i]))^3
+  }
+  return (design_matrix)
+}
+```
+
+
+By means of the functions below, the values of the coefficients $\{\beta\}_j$ are determined and the fitted regression splines $\hat{f}_j$ are obtained:
+
+```{r fhat}
+fhat_func <- function(q, train_coef=train, predict_sample=train) {
+  y = train$y
+  beta = lm(y ~ generate_gdm_func(train)[,2:4] + create_matrix(q, train))
+  fhat <- predict(beta, newdata = list(x = predict_sample$x))
+  return ('fhat' = fhat)
+}
+
+fhat_plot <- function(q, train) {
+  y = train$y
+  fhat <- fhat_func(q, train)
+  plot( y ~ x , train, lwd = 2, col = rgb(0.118, 0.565, 1, .6))
+  lines(fhat ~ x, train, lwd = 4, col = rgb(0.941, 0.502, 0.502, .8)) # change colors
+}
+```
+
+Before going any further, it is worth to have a visual evaluation of the splines models as the number of knots $q$ varies in the set $\{3,5,10\}$:
+
+```{r fhat_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=10}
+par(mfrow=c(2,2))
+fhat_plot(3, train)
+fhat_plot(5, train)
+fhat_plot(10, train)
+```
+
+
+As the plots show, we may, at this point qualitatively, notice that as the number of knots increases, the fitted curve locally changes more rapidly, i.e. the variance of the model rises. It seems evident, for instance, that having $q=10$ leads to a model that overfits the data. <br> Nevertheless, a numeric evaluation is needed and thus we move forward analyzing first the $C_p$ of the models. 
+
+```{r cp}
+mean_squared_error <- function(y_pred, f_hat) mean((y_pred-f_hat)^2)
+
+q_3 <- fhat_func(3, train_coef=train, predict_sample=train)
+q_5 <- fhat_func(5, train_coef=train, predict_sample=train)
+q_10 <-fhat_func(10, train_coef=train, predict_sample=train)
+
+fhats = list(q_3, q_5, q_10)
+cp = rep(NA, 3)
+
+for (i in 1:3) {
+  MSE_val = mean_squared_error(y_pred = train$y, f_hat = fhats[[i]])
+  p = 4+q_vals[i]
+  n = length(train$y)
+  sigma_hat = sum((train$y - fhats[[i]])^2)/(n-p)
+  second_term = 2*sigma_hat*(p/n)
+  cp[i] = MSE_val + second_term
+}
+
+plot(cp, type = 'b', lwd = 2, col = rgb(.1,.1,.1, .4), main = paste(expression(C_p), "of the models"), 
+     xlab = "Model", ylab = expression(C_p))
+```
+
+
+It is important to bare in mind that, since $C_p = MSE_{Tr} + \frac{2\cdot\hat{\sigma}^2\cdot p}{n}$ looks at the Mean Squared Error on the training data, it leads to a large overoptimism.<br> Thus, cross-validation is a more reliable technique to select the optimal $q$ value; among the different `CV` flavors, `K-fold CV` and `LOOCV` have been selected for the purpose:
+
+```{r }
+k_fold_cv <- function(q, train, K=5) {
+  n = length(train$y)
+  folds = sample(rep(1:K, length=n))
+  kcv = sapply(1:K, function(k) {
+    train_set = train[which(folds != k), ]
+    test_set = train[which(folds == k), ]
+    return(mean_squared_error(y_pred = test_set$y, 
+                              f_hat = fhat_func(q, train_coef = train_set, 
+                                                predict_sample = test_set)))
+  })
+  return(mean(kcv))
+}
+
+cv <- sapply(q_vals, k_fold_cv, train=train, K=30)
+
+plot(cv, type='b')
+```
+
+
+#### Question 4
 
