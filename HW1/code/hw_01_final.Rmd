@@ -250,7 +250,7 @@ and
 
 $$\big\{g_{(d+1)+j}(x)=(x-\xi_j)_+^d\big\}_{j=1}^q$$
 Again, linearity in transformed feature space pops up.
-Pushing the analysis a step further, it is worth to mention that *(1)* is a linear basis expansion in $x$. This consideration is somehow misleading: one may think they are in the same vectorial space. Actually though, splines and series expansions are not defined in the same space. More specifically, series expansions live in the $\mathrm{L_2}$ space, which has no smoothness constraints and, rather, does not provide any strict notion of smoothness, as pointed out in the notes: only convergence in mean holds out-of-the-box, without additional constraints (?). On the contrary, for splines point-wise convergence is enforced and differentiability up to order $d-1$ is required, thus restricting the space in which they are defined; in other words, they belong to the subspace $\mathscr{C}^{d-1}$.
+Pushing the analysis a step further, it is worth to mention that *(1)* is a linear basis expansion in $x$. This consideration is somehow misleading: one may think they are in the same vectorial space. Actually though, splines and series expansions are not defined in the same space. More specifically, series expansions live in the $\mathrm{L_2}$ space, which has no smoothness constraints and, rather, does not provide any strict notion of smoothness, as pointed out in the notes: only convergence in mean holds out-of-the-box, without additional constraints. On the contrary, for splines point-wise convergence is enforced and differentiability up to order $d-1$ is required, thus restricting the space in which they are defined; in other words, they belong to the subspace $\mathscr{C}^{d-1}$.
 
 <br><br>
 
