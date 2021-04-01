@@ -9,6 +9,7 @@ geometry: margin=1.25cm
 fontsize: 12pt
 header-includes:
 - \usepackage{bbold}
+- \usepackage{bbm}
 - \usepackage{mdframed, xcolor}
 - \usepackage{graphicx}
 - \usepackage{amsmath}
@@ -20,6 +21,7 @@ header-includes:
 - \newcommand{\R}{\mathbb{R}}
 - \newcommand{\Var}{\mathbb{V}\mathrm{ar}}
 - \newcommand{\Cov}{\mathbb{C}\mathrm{ov}}
+- \newcommand{\I}{\mathbbm{1}}
 - \newcommand{\blue}{\textcolor{blue}}
 - \newcommand{\darkgreen}{\textcolor[rgb]{0,.5,0}}
 - \newcommand{\gray}{\textcolor[rgb]{.3,.3,.3}}
@@ -155,8 +157,40 @@ The question know is how to solve the previous equation? The answer is trying to
 Stop explaining black box machine learning models for high stakes decisions and use interpretable models instead
 ----------
 
+Rather than trying to create models that are inherently interpretable, there has been a recent explosion of work on ‘explainable ML’, where a second (post hoc) model is created to explain the first black box model. This is problematic. Explanations are often not reliable, and can be misleading, as we discuss below. If we instead use models that are inherently interpretable, they provide their own explanations, which are faithful to what the model actually computes. As the term is presently used in its most common form, an explanation is a separate model that is supposed to replicate most of the behaviour of a black box (for example, ‘the black box says that people who have been delinquent on current credit are more likely to default on a new loan’).
 
+\textbf{It is a myth that there is necessarily a trade-off between accuracy and interpretability.} When considering problems that have structured data with meaningful features, there is often no significant difference in performance between more complex classifiers (deep neural networks, boosted decision trees, random forests) and much simpler classifiers (logistic regression, decision lists) after preprocessing.
 
+\textbf{Explainable ML methods provide explanations that are not faithful to what the original model computes. Explanations must be wrong.} They cannot have perfect fidelity with respect to the original model. If the explanation was completely faithful to what the original model computes, the explanation would equal the original model, and one would not need the original model in the first place, only the explanation. (In other words, this is a case where the original model would be interpretable.) This leads to the danger that any explanation method for a black box model can be an inaccurate representation of the original model in parts of the feature space. 
+
+Explanations often do not make sense or do not provide enough detail to understand what the black box is doing. For example when using saliency maps in computer vision (where wide spread), the explanatory model is basically telling us where the model is focusing but it is not telling us what the model is exactly doing with that information (so we still have a partial explanation). Another misleading trend nowadays is the explanation of models only when the label is correct, not when the model is predicting incorrectly (it can be of the same use to understand why a model is performing badly than to know why a model is performing correctly).
+
+Unfortunately, there are many cases where black boxes with explanations are preferred over interpretable models, even for high-stakes decisions. However, for most applications, I am hopeful that there are ways around some of these problems, whether they are computational problems or problems with training of researchers and availability of code. The first problem, however, is currently a major obstacle that I see no way of avoiding other than through policy, as discussed in the next section. 
+
+\textbf{Corporations can make profits from the intellectual property afforded to a black box.} Companies that charge for individual predictions could find their profits obliterated if an interpretable model were used instead. An example of where this can go wrong is given by Zech and colleagues32, who noticed that their neural network was picking up on the word ‘portable’ within an X-ray image, representing the type of X-ray equipment rather than the medical content of the image. If they had used an interpretable model, or even an explainable model, this issue would never have gone unnoticed. 
+
+\subsubsection{Algorithmic challenges in interpretable Machine Learning}
+
+Because interpretability is domain-specific, a large toolbox of possible techniques can come in handy. Below we expand on three of the challenges for interpretable ML that appear often.
+
+\textbf{Challenge 1: Constructing optimal logical models.} A logical model consists of statements involving ‘or’, ‘and’, ‘if–then’ and so on. We would like models that look like they are created by hand, but they need to be accurate, full-blown ML models. To this end, let us consider the following optimization problem, which asks us to find a model that minimizes a combination of the fraction of misclassified training points and the size of the model. Being i the traning observation that goes from 1 to n, and $F$ the family of logical models, the optimization problem is as follows:
+
+\begin{align}
+\operatorname*{min}_{f \in F} \bigg( \frac{1}{n} \sum_{i=1}^n \I(\textnormal{i is missclassified by f}) + \lambda \times \textnormal{size}(f) \bigg)
+\end{align}
+
+where the size of $f$ can be measured by the number of conditions or leaves in a decision tree, and $\lambda$ the classification error one would sacrifice to reduce by having one term fewer. The issue of course is that the optimization of such an equation is very complex:
+
+\begin{itemize}
+\item Interpretable models sometimes entail hard computational problems
+\item These computational problems can be solved by leveraging a combination of theoretical and systems-level techniques
+\end{itemize}
+
+\textbf{Challenge 2: Construct optimal sparse scoring systems.} 
+
+Not sure what additional information is being provided to us in this section...
+
+\textbf{Challenge 3: Define interpretability for specific domains and create methods accordingly, including computer vision.} Because interpretability needs to be defined in a domain-specific way, some of the most important technical challenges for the future are tied to specific important domains. Let us start with computer vision, for the classification of images. There is a vast and growing body of research on post hoc explainability of deep neural networks, but not as much work in designing interpretable neural networks. For computer vision in particular, there is not a clear definition of interpretability, and the sparsity-related models discussed above do not apply—sparsity in pixel space does not make sense. During training, the prototype layer finds parts of training images that act as prototypes for each class. For example, for bird classification, the prototype layer might pick out a prototypical head of a blue jay, prototypical feathers of a blue jay and so on. The network also learns a similarity metric between parts of images. Thus, during testing, when a new test image needs to be evaluated, the network finds parts of the test image that are similar to the prototypes it learned during training.
 
 
 
