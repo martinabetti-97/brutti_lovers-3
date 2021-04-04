@@ -2,6 +2,6 @@
 ---
 Stay angry, stay Brutti
 
-Martina why doesn't want me to be a contributor :(
+## Final project
 
-cause you contribute too much :-(
+I found this to extract data of google fit, maybe it can be useful (I have to test it) https://gist.github.com/danielperna84/a02c307e123036973845e85b326cc940
