@@ -41,3 +41,7 @@ vignettes/*.pdf
 
 # Add custom files/directories
 *.Rproj
+
+# Folders to ignore
+/Final_Project/References
+/Final_Project/Data
