@@ -9,6 +9,7 @@ geometry: margin=1.25cm
 fontsize: 12pt
 header-includes:
 - \usepackage{bbold}
+- \usepackage{booktabs}
 - \usepackage{hyperref}
 - \usepackage{mdframed, xcolor}
 - \usepackage{graphicx}
@@ -35,7 +36,6 @@ header-includes:
 - \newcommand{\bfun}{\left\{\begin{array}{ll}}
 - \newcommand{\efun}{\end{array}\right.}
 ---
-
 
 Research Title
 ----------
@@ -68,17 +68,32 @@ We will enumerate the project updates below:
 \item A small sample of the already pre-processed and merged data sets can be found below. A larger sample of this data (already pre-processed) can also be found in the csv file delivered in the Milestone 2.
 \end{enumerate}
 
+```{r echo=FALSE}
+library(knitr)
+library(kableExtra)
+
+df = read.csv("preprocessed_run_9.csv")
+colnames(df)[3] <- "LinAcc"
+caption <- "Example of the already pre-processed and merged data. 
+            In order to provide some additional information regarding the sampling frequency,
+            the rows are shown by steps of 100."
+df[seq(from=2000, to=2900, by=100),] %>% kable("latex", booktabs=T,
+                   caption=caption,
+                   table.envir = "table", position = "!h",
+                   row.names=NA) %>% kable_styling(font_size = 9)
+```
+
 Finally, we will also present some illustrative plots on the current data:
  
- ![200  Data Points over the Y-Axis Acceleration](200_points.png)
+ ![200  Data Points over the Y-Axis Acceleration.](200_points.png)
  
- ![Y-Axis Acceleration over a longer time interval](Acc.png)
+ ![Y-Axis Acceleration over a longer time interval.](Acc.png)
 
- ![Start and End inference over a single run session](StartStop.jpeg)
+ ![Start and End inference over a single run session.](StartStop.jpeg)
  
   ![Altitude measurements over multiple running sessions](Altitude.jpeg)
  
-  ![Decibel Timeseries for 2000 time stamps](Decibel.jpeg)
+  ![Decibel Timeseries for 2000 timestamps.](Decibel.jpeg)
 
 
 
@@ -90,7 +105,7 @@ Finally, we will also present some illustrative plots on the current data:
 Updated Project Timeline
 ----------
 
-![Timeline](Timeline.jpg)
+![Timeline.](Timeline.jpg)
 
 The data pre-processing phase of the project is already complete, and we foresee to start working on the modeling part after the 25 of May. The next sections of this report have not changed since the last Milestone.
 
