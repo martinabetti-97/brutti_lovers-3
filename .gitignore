@@ -44,4 +44,7 @@ vignettes/*.pdf
 
 # Folders to ignore
 /Final_Project/References
-/Final_Project/data
+*data
+*.ipynb_checkpoints
+Final_Project/.ipynb_checkpoints
+.vscode

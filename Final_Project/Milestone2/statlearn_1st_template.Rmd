@@ -1,6 +1,6 @@
 ---
 title: "Statistical Learning Project"
-author: "1st Milestone"
+author: "2nd Milestone"
 date: "Group 01 - Martina Betti, Stefano D'Arrigo, Leonardo Masci, Juan Mata"
 output: pdf_document
 urlcolor: magenta
@@ -72,7 +72,7 @@ We will enumerate the project updates below:
 library(knitr)
 library(kableExtra)
 
-df = read.csv("preprocessed_run_9.csv")
+df = read.csv("./data/preprocessed/preprocessed_run_9.csv")
 colnames(df)[3] <- "LinAcc"
 caption <- "Example of the already pre-processed and merged data. 
             In order to provide some additional information regarding the sampling frequency,
@@ -85,15 +85,15 @@ df[seq(from=2000, to=2900, by=100),] %>% kable("latex", booktabs=T,
 
 Finally, we will also present some illustrative plots on the current data:
  
- ![200  Data Points over the Y-Axis Acceleration.](200_points.png)
+ ![200  Data Points over the Y-Axis Acceleration.](./images/200_points.png)
  
- ![Y-Axis Acceleration over a longer time interval.](Acc.png)
+ ![Y-Axis Acceleration over a longer time interval.](./images/Acc.png)
 
- ![Start and End inference over a single run session.](StartStop.jpeg)
+ ![Start and End inference over a single run session.](./images/StartStop.jpeg)
  
-  ![Altitude measurements over multiple running sessions](Altitude.jpeg)
+  ![Altitude measurements over multiple running sessions](./images/Altitude.jpeg)
  
-  ![Decibel Timeseries for 2000 timestamps.](Decibel.jpeg)
+  ![Decibel Timeseries for 2000 timestamps.](./images/Decibel.jpeg)
 
 
 
@@ -105,7 +105,7 @@ Finally, we will also present some illustrative plots on the current data:
 Updated Project Timeline
 ----------
 
-![Timeline.](Timeline.jpg)
+![Timeline.](./images/Timeline.jpg)
 
 The data pre-processing phase of the project is already complete, and we foresee to start working on the modeling part after the 25 of May. The next sections of this report have not changed since the last Milestone.
 
