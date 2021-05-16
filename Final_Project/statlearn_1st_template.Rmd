@@ -9,6 +9,7 @@ geometry: margin=1.25cm
 fontsize: 12pt
 header-includes:
 - \usepackage{bbold}
+- \usepackage{hyperref}
 - \usepackage{mdframed, xcolor}
 - \usepackage{graphicx}
 - \mdfsetup{frametitlealignment=\center}
@@ -49,6 +50,49 @@ Abstract
 
 The main aim of this project is to provide runners with a suitable playlist for their day to day training, which can match the beat of each runner's pace with the beat of their favourite songs. We will mainly focus our attention on the use of interpretable machine learning algorithms to predict the near future pace a runner will have. With respect to the data collection task, we will be collecting our own training session data through a variety of mobile phone applications and potentially fitness tracking devices.
 
+
+----------
+
+
+Project Update
+----------
+
+We will enumerate the project updates below:
+
+\begin{enumerate}
+\item The most relevant update regarding the project is that we have recently decided not to use the \textit{steps} data provided by Google Fit. The rational behind this decision is that this information was only available for large intervals of time ($\sim$ 1 min), meaning we would lose granularity on the Arduino data if we were to merge them. Instead we will only use Google Fit data to extract information on Altitude and Distance, which is provided in a much more granular fashion (order of milliseconds as the Arduino data).
+\item The merge between Arduino and Google fit will be performed by fixing the Arduino data timestamps, and imputing Google Data by performing a linear interpolation (linear interpolation will also be used to replace missing data in the Arduino measurements).
+\item Among the difficulties we are facing in the data collection process we can highlight that for some of the users the Arduino App stops recording data abruptly after some random time. We are currently still trying to fix this by using other apps that might allow us to keep the phone active during our running session (e.g. Wakey). In the worst case scenario we will use the incomplete data. However, for two of the runners the Arduino App is able to collect data from start to end of the sessions.
+\item We currently have around 10 running sessions for each user. The features that we are collecting are all those available in Arduino and the features Altitude and Distance from Google Fit.
+\item All the raw data we have collected up to this point can be found under the following link: \href{https://drive.google.com/drive/u/1/folders/1mLCIF9zQHs7qVXGG03_Cj18c8y0vQie2}{Data Storage}.
+\item A small sample of the already pre-processed and merged data sets can be found below. A larger sample of this data (already pre-processed) can also be found in the csv file delivered in the Milestone 2.
+\end{enumerate}
+
+Finally, we will also present some illustrative plots on the current data:
+ 
+ ![200  Data Points over the Y-Axis Acceleration](200_points.png)
+ 
+ ![Y-Axis Acceleration over a longer time interval](Acc.png)
+
+ ![Start and End inference over a single run session](StartStop.jpeg)
+ 
+  ![Altitude measurements over multiple running sessions](Altitude.jpeg)
+ 
+  ![Decibel Timeseries for 2000 time stamps](Decibel.jpeg)
+
+
+
+\newpage
+
+
+----------
+
+Updated Project Timeline
+----------
+
+![Timeline](Timeline.jpg)
+
+The data pre-processing phase of the project is already complete, and we foresee to start working on the modeling part after the 25 of May. The next sections of this report have not changed since the last Milestone.
 
 ----------
 
@@ -170,25 +214,6 @@ We are going to use pandas for any preprocessing that may be needed, and proceed
 
 For the music part of it, we are going to work with [Spotipy](https://spotipy.readthedocs.io/en/2.17.1/), a Python library for the Spotify Web API.
 Finally, for the data collection, we are going to make use of the above mentioned mobile apps.
-
-
-----------
-
-Project Timeline
-----------
-
-![Timeline](Timeline.png)
-
-\begin{itemize}
-\item \textbf{Outline:} First draft of the project
-\item \textbf{Data Collection Protocol:} Phase in which we will try out all of the potential apps we will use, properly understand how they work, look for other data features we could consider and how to collect them, etc.
-\item \textbf{Data Collection:} Collecting running session data.
-\item \textbf{Data Pre-processing:} Generating code and better understanding the initial data we have collected up to that point. As mentioned earlier in this draft, we will not only have to worry about the data quality itself, but we will also need to make sure that the time series are processed and properly explored before hand.
-\item \textbf{ML methods exploration:} We will try to investigate more approaches we can apply on our data to obtain the best results possible.
-\item \textbf{ML coding:} Coding (in python mainly) the ML techniques we have explored in the previous step and briefly looking at their performance.
-\item \textbf{Spotify API:} Given that the main work will be on predicting each runners pace, we will leave the integration of the beat with the music for the last stage.
-\item \textbf{Testing:} Evaluation of the models implemented up to that point with the data collected to that point as well.
-\end{itemize}
 
 
 ----------
