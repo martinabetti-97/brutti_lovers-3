@@ -1,0 +1,108 @@
+---
+title: "Exercise 2"
+author: "Stefano D'Arrigo & Martina Betti"
+date: "5/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Look into the data
+
+Load the data
+
+```{r}
+load("../data/amazon_review_clean.RData")
+```
+
+The X–matrices are known as term-frequency matrices or document-term matrices and count how often various words are used in the text. For more info have also a look at the Kernel for Text slide set (pp. 142-147).
+Specifically, the X[i,j] element counts the number of times the word wj appears in the ith review for some pre-specified set of words of interest. Let's check:
+
+```{r}
+dim(X_tr)
+colnames(X_tr)[1:10]
+round(as.matrix(X_tr[1:10, 1:10]), 2)
+```
+
+
+Implement a linear classifier: for simplicity, I've implemented logistic regression, but another one can be used.
+
+
+```{r}
+# Define the sigmoid function (logistic function)
+sigmoid <- function(X, beta) 1 / (1 + exp(- t(X) %*% beta))
+
+
+# Define the gradient for the logistic regression
+gradient_logistic <- function(beta, X, XY) {
+  n <- dim(X)[1] # number of observations (data points)
+  retrun((t(X) %*% sigmoid(X, beta) - XY ) * 2 / n)
+}
+
+
+# Define the gradient descent function
+gradient_descent <- function(X, Y, G, alpha=0.01, max_iter=100, tol=0.001, beta=NULL) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  #
+  # :return beta [vector of coefficients] 
+  ###
+  
+  # Setup
+  if(is.null(beta))
+    beta <- matrix(runif(d))
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  XY <- t(X) %*% Y # precompute the product between the design matrix X and the vector Y
+  
+  # Gradient loop
+  for(i in 1:max_iter) {
+    
+    # Store the value of beta of the previous iteration
+    beta_old <- beta 
+    
+    # Update beta according to the gradient descent rule
+    beta <- beta - alpha * G(beta, X, XY)
+    
+    # Check convergence 
+    if(all(abs(beta - beta_old) <= tol)) {
+      print(paste("Converged after", i, "iterations"))
+      return(beta)
+    }
+  }
+  print(paste("Maximum number of iterations reached: ", max_iter))
+  return(beta)
+}
+```
+
+Map the Y string labels into \{0,1\}.
+
+```{r}
+encode <- function(Y) {
+  unique_labs <- unique(Y)
+  Y_encoded <- sapply(Y, function(y) {
+    if(y == unique_labs[1]) return(0)
+    else return(1)
+  })
+  return(Y_encoded)
+}
+```
+
+
+
+```{r}
+y_encoded <- encode(y_tr)
+
+beta <- gradient_descent(X_tr, y_encoded, gradient_logistic, alpha=0.5)
+```
+
+
