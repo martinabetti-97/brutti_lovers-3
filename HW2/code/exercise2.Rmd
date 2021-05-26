@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 set.seed(123)
 library(purrr)
+# for parallelization
+library("foreach")
+library(parallel)
+library(doParallel)
 ```
 
 ## Look into the data
@@ -42,7 +46,7 @@ gradient_perceptron <- function(X.T_X_j, X.T_Y_j, beta) X.T_X_j %*% beta - X.T_Y
 empirical_risk <- function(y, y.true) mean((y-y.true)^2)
 
 # Define the gradient descent function
-gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta=NULL, plot=FALSE) {
+gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta=NULL, plot=FALSE, threads = 4) {
   ###
   # Function to compute the gradient descent given the gradient function G.
   # :param X : design matrix (n_observations * n_features)
@@ -53,14 +57,16 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta
   # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
   # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
   # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param threads : integer that defines the number of cores to use for the matrix precomputation
   #
   # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
   ###
-  
   # gradient = 2/n (X.T*X*beta - X.T*Y)
   
   n <- dim(X)[1] # number of observations (data points)
   d <- dim(X)[2] # number of features
+  registerDoParallel(cores=threads)
+
   
   if(is.null(beta))
     beta <- matrix(runif(d, min = -10, max = 10))
@@ -78,10 +84,20 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta
   # requires a very low amount of memory; the drawback is the slowness of the computation (about 9 minutes). I'm 
   # trying to vectorize the for loop to speed it up. The apply function (&Co) doesn't work, because uses quite
   # a lot of memory and is still very slow.
-  for(i in 1:d) {
-    X.T_X[i,] <- t(X[,i]) %*% X * 2 / n # precompute X.T * X
-    X.T_Y[i,] <- t(X[,i]) %*% Y * 2 / n # pre-compute X.T * Y
-  }
+  
+  #for(i in 1:d) {
+  #  X.T_X[i,] <- t(X[,i]) %*% X * 2 / n # precompute X.T * X
+  #  X.T_Y[i,] <- t(X[,i]) %*% Y * 2 / n # pre-compute X.T * Y
+  #}
+  
+  X.T_X = foreach(i = 1:d, .combine = rbind, .inorder = T) %dopar%{
+   t(X[,i]) %*% X * 2 / n     
+    }
+   
+  X.T_Y = foreach(i = 1:d, .combine = rbind, .inorder = T) %dopar%{
+   t(X[,i]) %*% Y * 2 / n     
+    }
+  
   
   print("Entering gradient loop...")  
   
@@ -234,7 +250,9 @@ Encode the labels and compute the parameters of the trained model:
 ```{r}
 y_tr_encoded <- encode(y_tr)# encode(y_tr[idxs])
 
-result <- gradient_descent(X_tr, y_tr_encoded, gradient_perceptron, alpha=0.3, max_iter=200, plot=TRUE)
+#result <- gradient_descent(X_tr, y_tr_encoded, gradient_perceptron, alpha=0.3, max_iter=200, plot=TRUE)
+result <- gradient_descent(X_tr, y_tr_encoded, gradient_perceptron, alpha=0.2, max_iter=200, plot=F, threads=8)
+
 ```
 
 Take a small random subset of the test set:
