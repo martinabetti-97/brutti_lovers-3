@@ -1,0 +1,177 @@
+---
+title: "Exercise 2"
+author: "Stefano D'Arrigo & Martina Betti"
+date: "5/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(123)
+```
+
+## Look into the data
+
+Load the data
+
+```{r}
+load("../data/amazon_review_clean.RData")
+```
+
+The X–matrices are known as term-frequency matrices or document-term matrices and count how often various words are used in the text. For more info have also a look at the Kernel for Text slide set (pp. 142-147).
+Specifically, the X[i,j] element counts the number of times the word wj appears in the ith review for some pre-specified set of words of interest. Let's check:
+
+```{r}
+dim(X_tr)
+colnames(X_tr)[1:10]
+round(as.matrix(X_tr[1:10, 1:10]), 2)
+```
+
+
+Implement a linear classifier: 
+
+```{r}
+# Define the regression function
+f_reg <- function(X, beta) cbind(1,X) %*% beta
+
+# Define the linear classifier
+linear_classifier <- function(X, beta) ifelse(f_reg(X, beta) >= 0.5, 1, 0)
+
+# Define the gradient for the linear
+gradient_linear <- function(X.T_X, X.T_Y, beta) X.T_X %*% beta - X.T_Y
+
+# Define the empirical risk
+empirical_risk <- function(y.pred.reg, y.true) mean((y.pred.reg-y.true)^2) # OLS
+
+# Define the gradient descent function
+gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta=NULL, plot=FALSE) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
+  # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param threads : integer that defines the number of cores to use for the matrix precomputation
+  #
+  # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
+  ###
+  
+  # gradient = 2/n (X.T*X*beta - X.T*Y)
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  
+  if(is.null(beta))
+    beta <- matrix(runif(d+1, min = -1, max = 1))
+  
+  emp_risk_hist <- rep(0, max_iter)
+  
+  print("Precomputing the matrices")
+  
+  X.T_X = t(cbind(1,X)) %*% cbind(1,X) * (2 / n) # (d+1) x (d+1)
+  X.T_Y = t(cbind(1,X)) %*% Y * (2 / n) # (d+1) x 1
+  
+  print("Entering gradient loop...")  
+  
+  # Gradient loop
+  for(i in 1:max_iter) {
+
+    grad <- G(X.T_X, X.T_Y, beta)
+    
+    # Update beta
+    beta <- beta - alpha * grad # update rule
+
+    # Compute and store the ER value of the i-th iteration
+    emp_risk_hist[i] <- empirical_risk(f_reg(X, beta), Y)
+    
+    print(paste("Iteration", i, " ER:", emp_risk_hist[i]))
+    
+    # Check convergence
+    if(all(abs(grad) <= tol)) {
+      max_iter <- i
+      break
+    }
+    
+  }
+  print(paste("Converged after", max_iter, "iterations"))
+
+  if(plot)
+    plot(seq(1,max_iter), emp_risk_hist[1:max_iter], col="blue",
+         xlab="iter", ylab="ER", main="Gradient descent")
+
+  return(list(param=beta, emp_risk_hist=emp_risk_hist))
+}
+
+```
+
+
+
+Map the Y string labels into \{0,1\}:
+
+```{r}
+encode <- function(Y) {
+  unique_labs <- unique(Y)
+  Y_encoded <- as.integer(Y == unique_labs[2])
+  return(matrix(Y_encoded))
+}
+```
+
+Take a small random subset of the train set:
+
+```{r eval=FALSE, include=FALSE}
+n <- length(y_tr)
+idxs <- sample(seq(1, n), size = n, replace = FALSE)
+```
+
+Encode the labels and compute the parameters of the trained model:
+
+```{r}
+y_tr_encoded <- encode(y_tr)# encode(y_tr[idxs])
+
+t_0 <- Sys.time()
+t_0
+
+# with lr=0.003 the ER diverges, with lr=0.001 the ER converges, but slowly
+result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.001, max_iter=500, plot=F)
+Sys.time() - t_0
+```
+
+Take a small random subset of the test set:
+
+```{r}
+n <- length(y_te)
+idxs <- sample(seq(1, n), size = 1000, replace = FALSE)
+```
+
+Encode the labels of the ground-truth vector and compute the predictions:
+
+```{r}
+y_te_encoded <- encode(y_te[idxs])
+
+pred <- linear_classifier(X_te[idxs,], result$param)
+```
+
+Rapidly compute the number of right predictions:
+
+```{r}
+perf <- sum(pred == y_te_encoded) / 1000
+```
+
+Check the number of right predictions:
+
+```{r}
+perf
+```
+Plot the ER:
+
+```{r}
+plot(seq(1,length(result$emp_risk_hist)), result$emp_risk_hist, col="blue",
+         xlab="iter", ylab="ER", main="Gradient descent")
+```
+
+
+
