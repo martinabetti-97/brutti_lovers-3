@@ -8,13 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 set.seed(123)
-
-# for parallelization
-library("foreach")
-library(parallel)
-library(doParallel)
-#library(keras)
-#library(tensorflow)
 ```
 
 ## Look into the data
@@ -39,19 +32,19 @@ Implement a linear classifier:
 
 ```{r}
 # Define the regression function
-f_reg <- function(X, beta) cbind(1,X) %*% beta # tf$matmul(cbind(1,X) %*% beta)
+f_reg <- function(X, beta) cbind(1,X) %*% beta
 
 # Define the linear classifier
 linear_classifier <- function(X, beta) ifelse(f_reg(X, beta) >= 0.5, 1, 0)
 
 # Define the gradient for the linear
-gradient_linear <- function(X.T_X, X.T_Y, beta) X.T_X %*% beta - X.T_Y # tf$matmul(X.T_X, beta) - X.T_Y
+gradient_linear <- function(X.T_X, X.T_Y, beta) X.T_X %*% beta - X.T_Y
 
 # Define the empirical risk
 empirical_risk <- function(y.pred.reg, y.true) mean((y.pred.reg-y.true)^2) # OLS
 
 # Define the gradient descent function
-gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta=NULL, plot=FALSE, threads = 4) {
+gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta=NULL, plot=FALSE) {
   ###
   # Function to compute the gradient descent given the gradient function G.
   # :param X : design matrix (n_observations * n_features)
@@ -66,44 +59,23 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.00001, beta
   #
   # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
   ###
+  
   # gradient = 2/n (X.T*X*beta - X.T*Y)
   
   n <- dim(X)[1] # number of observations (data points)
   d <- dim(X)[2] # number of features
-  registerDoParallel(cores=threads)
-
   
   if(is.null(beta))
     beta <- matrix(runif(d+1, min = -1, max = 1))
   
   emp_risk_hist <- rep(0, max_iter)
   
-  # X.T_X <- matrix(rep(0, d^2), nrow=d, ncol=d)
-  # X.T_Y <- matrix(rep(0, d), nrow=d, ncol=1)
-  
   print("Precomputing the matrices")
-  
-  #for(i in 1:d) {
-  #  X.T_X[i,] <- t(X[,i]) %*% X * 2 / n # precompute X.T * X
-  #  X.T_Y[i,] <- t(X[,i]) %*% Y * 2 / n # pre-compute X.T * Y
-  #}
   
   X.T_X = t(cbind(1,X)) %*% cbind(1,X) * (2 / n) # (d+1) x (d+1)
   X.T_Y = t(cbind(1,X)) %*% Y * (2 / n) # (d+1) x 1
   
-  # X.T_X = foreach(i = 1:d, .combine = rbind, .inorder = T) %dopar%{
-  #  t(X[,i]) %*% X * 2 / n     
-  #   }
-  #  
-  # X.T_Y = foreach(i = 1:d, .combine = rbind, .inorder = T) %dopar%{
-  #  t(X[,i]) %*% Y * 2 / n     
-  #   }
-  # 
-  
   print("Entering gradient loop...")  
-  
-  # After the pre-computation, the gradient loop is quite fast, even though the beta NA issue hasn't been fixed
-  # yet
   
   # Gradient loop
   for(i in 1:max_iter) {
@@ -163,8 +135,8 @@ y_tr_encoded <- encode(y_tr)# encode(y_tr[idxs])
 t_0 <- Sys.time()
 t_0
 
-# with lr=0.03 the ER diverges, with lr=0.001 the ER converges, but slowly
-result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.001, max_iter=200, plot=F, threads=8)
+# with lr=0.003 the ER diverges, with lr=0.001 the ER converges, but slowly
+result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.001, max_iter=500, plot=F)
 Sys.time() - t_0
 ```
 
@@ -194,7 +166,12 @@ Check the number of right predictions:
 ```{r}
 perf
 ```
+Plot the ER:
+
 ```{r}
-plot(seq(1, length(result$emp_risk_hist)), result$emp_risk_hist)
+plot(seq(1,length(result$emp_risk_hist)), result$emp_risk_hist, col="blue",
+         xlab="iter", ylab="ER", main="Gradient descent")
 ```
+
+
 
