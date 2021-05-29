@@ -1,0 +1,506 @@
+---
+title: "HOMEWORK 01"
+author: "G01: Betti, D'Arrigo, Masci, Mata Naranjo"
+output: html_document
+header-includes:
+- \usepackage{bbold}
+- \usepackage{hyperref}
+- \usepackage{mdframed, xcolor}
+- \usepackage{graphicx}
+- \usepackage{amsmath}
+- \mdfsetup{frametitlealignment=\center}
+- \usepackage{multirow}
+- \usepackage{bbold}
+- \usepackage{amsfonts}
+- \usepackage{mathtools}
+- \definecolor{shadecolor}{rgb}{0.89,0.8,1}
+- \newcommand{\I}{\mathbb{I}}
+- \newcommand{\Prob}{\mathbb{P}}
+- \newcommand{\Exp}{\mathbb{E}}
+- \newcommand{\Var}{\mathbb{V}\mathrm{ar}}
+- \newcommand{\Cov}{\mathbb{C}\mathrm{ov}}
+- \newcommand{\blue}{\textcolor{blue}}
+- \newcommand{\darkgreen}{\textcolor[rgb]{0,.5,0}}
+- \newcommand{\gray}{\textcolor[rgb]{.3,.3,.3}}
+- \newcommand{\blueA}{\textcolor[rgb]{0,.1,.4}}
+- \newcommand{\blueB}{\textcolor[rgb]{0,.3,.6}}
+- \newcommand{\blueC}{\textcolor[rgb]{0,.5,.8}}
+- \newcommand{\evidenzia}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\nero}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\darkyel}{\textcolor[rgb]{.4,.4,0}}
+- \newcommand{\darkred}{\textcolor[rgb]{.6,0,0}}
+- \newcommand{\blueDek}{\textcolor[rgb]{0.6000000, 0.7490196, 0.9019608}}
+- \newcommand{\purpLarry}{\textcolor[rgb]{0.6901961, 0.2431373, 0.4784314}}
+- \newcommand{\lightgray}{\textcolor[rgb]{.8,.8,.8}}
+- \newcommand{\bfun}{\left\{\begin{array}{ll}}
+- \newcommand{\efun}{\end{array}\right.}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+
+```{r library, echo=FALSE, message=FALSE, warning=FALSE}
+require(viridis) 
+library(DT)
+```
+
+<br><br>
+
+# Part 1 - The Bayes Classifier
+
+<br>
+
+### 1. Define the Bayes classifier/strategy and briefly explain its role/importance in classification/prediction.
+
+<br>
+
+\textbf{Include here some theory...}
+
+<br>
+
+### 2. Find (with pen and paper) the Bayes classification rule $h_{opt}(x)$.
+
+<br>
+
+It can be proven that under the following conditions:
+
+\begin{equation}
+Y \in \{0, 1\}
+\end{equation}
+
+\begin{equation}
+X \in \mathbb{R}
+\end{equation}
+
+the optimal classifier is:
+
+\begin{equation}
+h_{opt}(x) = \I(f_{opt}(x) - 1/2 \geq 0)
+\end{equation}
+
+In order to estimate the optimal Bayes classification rule we have to derive $f_{opt}(x)$ by using the Bayes Rule:
+
+\begin{equation}
+\begin{split}
+f_{opt}(x) 
+&= \Exp(Y=1|X=x) = \Prob(Y=1|X=x) = \\
+&= \frac{\Prob(X|Y=1)\Prob(Y=1)}{\Prob(X|Y=1)\Prob(Y=1)+\Prob(X|Y=0)\Prob(Y=0)} = \\
+&\stackrel{i}{=} \frac{\Prob(X|Y=1)}{\Prob(X|Y=1)+\Prob(X|Y=0)} = \\
+&\stackrel{ii}{=} \frac{\I_{[-1, 3]}(x)}{\I_{[-1, 3]}(x)+\I_{[-3, 1]}(x)}
+\end{split}
+\end{equation}
+
+where we have used that (i) $P(Y=0) = P(Y=1)$ and (ii) $(X|Y=0) \sim Unif(-3, 1)$ and $(X|Y=1) \sim Unif(-1, 3)$. So finally we have that:
+
+\begin{equation}
+h_{opt}(x) = \I\bigg(\frac{\I_{[-1, 3]}(x)}{\I_{[-1, 3]}(x)+\I_{[-3, 1]}(x)} - \frac{1}{2} \geq 0\bigg)
+\end{equation}
+
+
+<br>
+
+### 3. Simulate n = 250 data from the joint data model p(y, x) = p(x | y) · p(y) described above, and then:
+
+#### a. Plot the data together with the regression function that defines $h_{opt}(x)$
+
+```{r Plot Regression, fig.width=18, fig.height=10}
+# Generate Random Data
+n <- 250
+y <- sample(c(0,1), size=n, replace=TRUE, prob=c(.5,.5))
+x_given_y <- c()
+for (yi in y){
+  if (yi==0){
+    x <- runif(1, -3, 1)
+  } else {
+    x <- runif(1, -1, 3)
+  }
+  x_given_y <- c(x_given_y, x)
+}
+
+# Optimal Bayes Classifier
+h.opt <- function(x) {
+    
+  f.opt = (ifelse((x<=3&x>=-1), 1, 0))/(ifelse((x<=3&x>=-1), 1, 0) + ifelse((x<=1&x>=-3), 1, 0))
+  res = ifelse(f.opt-.5>=0, 1, 0)
+  return(res)
+}
+
+# Plot + Regression Function
+mycol = viridis(7, alpha = .7)
+plot(x = x_given_y, y = y, bg= ifelse(y == 1, mycol[1], mycol[7]),
+     pch=21, xlab="X", ylab = "Y", main="Simulated Data Points + Optimal Bayes Classifier", cex=3, 
+     cex.lab=1.5, cex.axis=1.5, cex.main=2)
+abline(h = 0.5, lty = 3, col = gray(.8))
+abline(v = 0, lty = 3, col = gray(.8))
+rug(x_given_y)
+curve(h.opt(x), from=-3, to=3, add = TRUE, col="gray", lwd=3)
+
+```
+
+<br>
+
+#### b. Evaluate the performance of the Bayes Classifiers on these simple (only 1 feature!) data
+
+The performance evaluation will be done using the binary loss function (which is the loss function used to derived the $h_{opt}()x$ function used to construct this Bayes Classifier):
+
+```{r Loss Evaluator}
+# Loss Function
+loss <- function(y.actual, y.pred) {
+  
+  res = sum(y.actual != y.pred)
+  return(res)
+}
+
+print(paste("Bayes Classifier Loss:", loss(y, h.opt(x_given_y))))
+print(paste("Relative Bayes Classifier Loss:", loss(y, h.opt(x_given_y))/length(y)))
+
+```
+<br>
+
+#### c. Apply any other classifier of your choice to these data and comparatively comment its performance
+
+<br>
+
+In this section we will choose another Classifier to compare its performance against that of the Bayes Classifier. The most obvious option at this point seems to be the Logistic Regression, so we will give this Classifier a try:
+
+```{r Logistic Regression, fig.width=18, fig.height=10}
+
+logistic_regression <- function(x, y) {
+  
+  data = data.frame(y, x)
+  fit_logit <- glm(y ~ ., data = data, family = "binomial")
+  params = coef(fit_logit)
+  return(params)
+}
+
+logit_func <- function(x, parameters=params) 1/(1 + exp(-(parameters[1]+parameters[2]*x)))
+
+params = logistic_regression(x=x_given_y, y=y)
+
+# Plot + Regression Function
+plot(x = x_given_y, y = y, bg= ifelse(y == 1, mycol[1], mycol[7]),
+     pch=21, xlab="X", ylab = "Y", main="Simulated Data Points + Optimal Bayes Classifier", cex=3, 
+     cex.lab=1.5, cex.axis=1.5, cex.main=2)
+abline(h = 0.5, lty = 3, col = gray(.8))
+abline(v = 0, lty = 3, col = gray(.8))
+rug(x_given_y)
+curve(h.opt(x), from=-3, to=3, add = TRUE, col="gray", lwd=3)
+curve(logit_func(x, parameters=params), from=-3, to=3, add = TRUE, col="orchid", lwd=3)
+curve(round(logit_func(x, parameters=params)), from=-3, to=3, add = TRUE, col="black", lwd=3)
+legend(x=-3,, y=1, 
+       legend=c("h Opt Bayes", "Logistic Regression", "h Opt Logistic Regression"), 
+       #legend=c("1", "2", "3"), 
+       col=c("gray", "orchid", "black"), cex=1.5, lty=1, lwd=3)
+
+print(paste("Logistic Regression Classifier Loss:", loss(y, round(logit_func(x=x_given_y, parameters=params)))))
+print(paste("Relative Logistic Regression Classifier Loss:", loss(y, round(logit_func(x=x_given_y, parameters=params)))/length(y)))
+
+```
+
+<br>
+
+#### d. Who’s the best after 1000 simulations?
+
+<br>
+
+In order to compare both classifiers we will perform 1000 simulations and estimate the loss for each of the random samples. 
+
+```{r Simulation, fig.width=18, fig.height=10}
+
+M = 1000
+res_bayes = rep(NA, M)
+res_log = rep(NA, M)
+
+for(sim in 1:M){
+  
+  #if(sim%%10 == 0){
+  #  print(sim)
+  #}
+  # Simulate Random Data
+  n <- 250
+  y <- sample(c(0,1), size=n, replace=TRUE, prob=c(.5,.5))
+  x_given_y <- c()
+  for (yi in y){
+    if (yi==0){
+      x <- runif(1, -3, 1)
+    } else {
+      x <- runif(1, -1, 3)
+    }
+    x_given_y <- c(x_given_y, x)
+  }
+  
+  # Make predictions with Logistic Regression
+  params = logistic_regression(x=x_given_y, y=y)
+  res_log[sim] = loss(y, round(logit_func(x=x_given_y, parameters=params)))
+  
+  # Make predictions with Bayes
+  res_bayes[sim] = loss(y, h.opt(x_given_y))
+  
+}
+
+print(paste("Average Bayes Classifier Loss:", mean(res_bayes)))
+print(paste("Average Logistic Regression Classifier Loss:", mean(res_log)))
+
+par(mfrow = c(1:2))
+hist(res_log, prob=TRUE, main="Distribution of \n Logistic Regression Loss", xlab="Loss", col=mycol[4], ylim = c(0, 0.07), breaks=20, cex.lab=1.5, cex.axis=1.5, cex.main=2)
+hist(res_bayes, prob=TRUE, main="Distribution of \n Bayes Loss", xlab="Loss", col=mycol[6], ylim = c(0, 0.07), breaks=20, cex.lab=1.5, cex.axis=1.5, cex.main=2)
+
+```
+
+The logisitic regression seems to outperform the bayes classifier, but not by much. The reason for which we consider that the logistic regression is able to classify better us because it it able to handle data points that fall in the interval $x \in [-1, 1]$ in a more flexible manner, while the Bayes Classifier will always assign these points to the class $Y=1$. Theoretically, the Bayes approach should be the ideal classifier (since the data points are equally distirbuted among $Y=1$ and $Y=0$ in this interval), however since our data generating process only generates 250 points, the real  disitrbution in the $[-1, 1]$ interval is probably not equally distributed.
+
+
+
+
+<!-- Beginning of the second part  -->
+
+```{r setup part 2, echo=FALSE, message=FALSE, warning=FALSE}
+library(Matrix)
+
+set.seed(123)
+```
+
+
+# Implementation of the gradient descent algorithm for the linear regression classifier
+
+In the following, the implementation of the gradient descent is provided. Let's recall that the linear regression classifier is such that 
+
+\begin{equation}
+  h_{emp}(\mathbf{x}) = \mathbb{I}(f(\mathbf{x} \geq \frac{1}{2}))
+\end{equation} 
+
+where $f_{emp}(\mathbf{x}) = \arg_{f\in\mathcal{F}}\min \hat{R}(f) = \mathbf{x}^T\mathbf{\beta} + x_0\beta_0$, $x_0=1$. From now on, we assume that the design matrix $\mathbb{X}$ contains also $x_0$ and hence $\mathbf{\beta} \leftarrow [\mathbf{\beta}, \beta_0]^T$. Then, the gradient is equal to 
+
+\begin{equation}
+  \nabla \hat{R}(\mathbf{\beta}) = \nabla (\frac{1}{n} \Vert (\mathbf{Y} - \mathbb{X}\mathbf{\beta} \Vert_2^2) = \mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}
+\end{equation}
+
+Finally, the update rule of the gradient descent algorithm is
+
+\begin{equation}
+  \mathbf{\beta} \leftarrow \mathbf{\beta} - \alpha \nabla \hat{R}(\mathbf{\beta})
+\end{equation}
+
+
+```{r gradient_descent}
+
+# Define the regression function
+f_reg <- function(X, beta) cbind(1,X) %*% beta
+
+
+# Define the linear classifier
+linear_classifier <- function(X, beta) ifelse(f_reg(X, beta) >= 0.5, 1, 0)
+
+
+# Define the gradient for the linear
+gradient_linear <- function(X.T_X, X.T_Y, beta) X.T_X %*% beta - X.T_Y
+
+
+# Define the empirical risk
+empirical_risk <- function(y.pred.reg, y.true) mean((y.pred.reg-y.true)^2) # OLS
+
+
+# Define the gradient descent function
+gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.000001, beta=NULL, plot=FALSE, verbose=95) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
+  # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param verbose : level of verbosity; if 0, only starting and ending are notified; 
+  #                   if > 0, the higher the value, the more verbose the function
+  #
+  # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
+  ###
+  t_0 <- Sys.time(); print(t_0)
+  
+  verbose = ifelse(verbose > 99, 100, 100 - verbose)
+  
+  notify <- ifelse(verbose > 0, function(i, ER) {
+    if((i %% verbose) == 0) print(paste("Iteration", i, " ER:", ER))
+  }, function(i, ER) {})
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  
+  if(is.null(beta))
+    beta <- matrix(rep(0,d+1))
+  
+  emp_risk_hist <- rep(0, max_iter+1)
+  
+  print("Precomputing the matrices")
+  
+  X.T_X <- crossprod(cbind(1,X)) * (2 / n) # (d+1) x (d+1); equivalent to t(X)%*%X but faster
+  X.T_Y <- crossprod(cbind(1,X), Y) * (2 / n) # (d+1) x 1; 
+  
+  print("Entering gradient loop...")  
+  
+  # Gradient loop
+  for(i in 1:max_iter) {
+
+    grad <- G(X.T_X, X.T_Y, beta)
+    
+    # Update beta
+    beta <- beta - alpha * grad # update rule
+
+    # Compute and store the ER value of the i-th iteration
+    emp_risk_hist[i+1] <- empirical_risk(f_reg(X, beta), Y)
+    
+    notify(i, emp_risk_hist[i+1])
+    
+    # Check convergence
+    if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
+      max_iter <- i
+      break
+    }
+    
+  }
+  
+  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+  
+  print(Sys.time() - t_0)
+
+  if(plot)
+    plot(seq(1,max_iter), emp_risk_hist[2:(max_iter+1)], col="blue",
+         xlab="iter", ylab="ER", main="Gradient descent")
+
+  return(list(param=beta, emp_risk_hist=emp_risk_hist[-1]))
+}
+
+```
+
+<br>
+
+Before training the classifier on the Amazon reviews data set, let's see how the classifier behaves, borrowing the data set generated in the previous exercise:
+
+<br>
+
+```{r sample_dataset, fig.width=18, fig.height=10}
+x_given_y <- matrix(x_given_y)
+
+result.test <- gradient_descent(x_given_y, y, gradient_linear, alpha=0.03, max_iter=500, tol=0.00001, plot=T, verbose=1)
+```
+
+<br>
+
+After the training, the results are visualized in the plot below:
+
+<br>
+
+```{r sample_data_plot, echo=FALSE, fig.align='center', fig.height=10, fig.width=18}
+
+mycol = viridis(7, alpha = .7)
+plot(x = x_given_y, y = y, bg= ifelse(y == 1, mycol[1], mycol[7]),
+     pch=21, xlab="X", ylab = "Y", main="Simulated Data Points + Linear Regression Classifier", cex=3, cex.lab=1.5, cex.axis=1.5, cex.main=2)
+abline(h = 0.5, lty = 3, col = gray(.8))
+abline(v = 0, lty = 3, col = gray(.8))
+rug(x_given_y)
+curve(linear_classifier(x, result.test$param), from=-3, to=3, add =T, col="gray", lwd=4)
+curve(f_reg(x, result.test$param), add=T, col="coral", lwd=4, lty=2)
+legend("topleft", legend=c("Classifier", "Regression line"), col=c("gray", "coral"))
+
+```
+
+<br><br>
+
+
+## Train the model on the Amazon reviews data set
+
+<br>
+
+Load the Amazon reviews data set:
+
+<br>
+
+```{r dataset_loading}
+load("../data/amazon_review_clean.RData")
+```
+
+The design matrix $X$ contains the TF-IDF scores for each word (feature) in each review. Specifically, it has a (`r dim(X_tr)`) size.
+
+<br>
+
+```{r design_matrix, echo=FALSE}
+round(as.matrix(X_tr[1:10, 1:10]), 2)
+```
+
+<br>
+
+It may be noticed that such design matrix, even if apparently huge, is extremely sparse. In order to compress it, saving space and speeding the computations, the original matrices have been converted into `sparseMatrix` objects of the `Matrix` library. It can be shown that, relying on this library, the gain of the performance in terms of the computation speed is very relevant.
+
+<br>
+
+```{r toSparse}
+X_tr <- as(X_tr, "sparseMatrix")
+X_te <- as(X_te, "sparseMatrix")
+```
+
+<br>
+
+Looking at the environment variables, it is impressive to notice that the  design matrix, through this optimization, no longer takes about 1.6GB but just about 120MB.
+
+<br>
+
+At this stage, it is worth to point out that such classifier induces some further considerations. Indeed, differently from the logistic regression classifier, the linear regression classifier doesn't explicitly map the values of the regression function into $[0,1]$, whatever great they are; hence, when computing the gradient, the initialization of the the parameters $\mathbf{\beta}$ and the learning rate $\alpha$ play an even more crucial role: $alpha$ must balance the potentially huge contribute of the gradient $\mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}$, which for such a high-sized matrix $\mathbb{X}$ with positive values greater than 1 and for $\mathbf{\beta} \neq [0,0,...,0]^T$ may diverge or incur in numeric overflows. For this reasoning, initially the maximum value of $\alpha$ for which the algorithm converges was found to be 0.001. But, such a small learning rate causes the algorithm to converge after many iterations: in the trials, almost 4000 iterations were required to reach the convergence with a good (small) approximation tolerance.
+
+Even though train the model on this data set for such many iterations is not prohibitive - the training takes just about 15 minutes -, to speed up the convergence and improve the stability and the final performance of the model, a normalization step $x_i^{(j)} = \frac{x^{(j)}_i - \min{x^{(j)}}}{\max{x^{(j)}} - \min{x^{(j)}}}$ to map all the features values in the interval $[0,1]$ is performed before training; this interval allows to keep $\mathbb{X}$ sparse, making the aforementioned optimization still possible. Moreover, looking at the features, the words that are recognized to be stop words are removed.
+
+<br>
+
+<!-- Code for normalizing the features and for removing the stop words -->
+
+<br>
+
+As a final step before going through the actual training of the model, the $\mathbf{Y}$ labels are encoded mapped to $\{0, 1\}$.
+
+<br>
+
+```{r encode}
+encode <- function(Y) {
+  unique_labs <- unique(Y)
+  Y_encoded <- as.integer(Y == unique_labs[2])
+  return(matrix(Y_encoded))
+}
+
+y_tr_encoded <- encode(y_tr)
+```
+
+<br>
+
+Finally, the model is trained:
+
+<br>
+
+```{r training, fig.align='center', fig.width=18, fig.height=10}
+
+result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.001, max_iter=100, plot=T, verbose = 10)
+
+```
+
+<br>
+
+Evaluating the model on the test set, the accuracy after training is:
+
+<br>
+
+```{r evaluate}
+y_te_encoded <- encode(y_te)
+
+pred <- linear_classifier(X_te, result$param)
+
+accuracy <- sum(pred == y_te_encoded) / length(y_te_encoded)
+
+print(paste("Accuracy of the model:", accuracy))
+```
+
+
+
+
+
