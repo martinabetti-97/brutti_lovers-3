@@ -519,12 +519,13 @@ cat(paste("Accuracy of the model:", accuracy))
 
 ### Stochastic Implementation
 
-For the stochastic implementation of the gradient descent at each iteration we consider a single data point of the original training set, which is drawn at random. Since we only consider a single point, we don't need to compute the gradient for the whole matrix. This approach is based on the assumption that the noise of the sampling will cancel out, however we expect it to have some effects on the performances. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the batch implementation, let's check.
+For the stochastic implementation of the gradient descent at each iteration we consider a single data point of the original training set, which is drawn at random. Since we only consider a single point, we don't need to compute the gradient for the whole matrix since for each iteration the gradient is defined as the product $\mathbb{X}^T \mathbb{X}$ where $\mathbb{X}$ is a vector representing all the features of the point. The $\mathbf{Y}$ is instead represented by a single integer 0 or 1 which is the true value of Y for the data point. 
 
+This approach is based on the assumption that the noise of the sampling will cancel out, however we expect it to have some effects on the performance, especially on the ER. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the one in batch implementation, let's check.
 
 ```{r}
 # Define the gradient descent function
-gradient_descent_stochastic <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.000001, beta=NULL, plot=FALSE) {
+gradient_descent_stochastic <- function(X, Y, alpha=0.5, max_iter=100, tol=0.000001, beta=NULL, plot=FALSE) {
  
   t_0 <- Sys.time()
   n <- dim(X)[1] # number of observations (data points)
@@ -540,18 +541,22 @@ gradient_descent_stochastic <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.
   # Gradient loop
   for(i in 1:max_iter) {
 
+    #sampling one data point
     idx <- sample(seq(1, n), size = 1, replace = FALSE)
     
-    grad <-  X[idx,] * beta - Y[idx]
     
+    X.T_X <- t(X[idx,]) %*% X[idx,] * 2 # n = 1 ?
+    X.T_Y <- t(X[idx,]) %*% X[idx,] * Y[idx] * 2
+    grad <-  X.T_X[1] * beta - X.T_Y[1]
+  
     # update alpha
     alpha_adj = alpha/i
     
     # Update beta
-    beta <- beta - alpha_adj * grad # update rule
+    beta <- beta - alpha_adj  * grad 
 
     # Compute and store the ER value of the i-th iteration
-    emp_risk_hist[i+1] <- empirical_risk(f_reg(X, beta), Y)
+    emp_risk_hist[i+1] -> cbind(1,X[idx,]) %*% beta - Y[idx]
     
     # Check convergence
     if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
@@ -579,7 +584,7 @@ gradient_descent_stochastic <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.
 
 
 ```{r echo=TRUE, warning=FALSE}
-result_st <- gradient_descent_stochastic(X_tr, y_tr_encoded, gradient_linear, alpha=0.05, max_iter = 3000,  plot=T)
+result_st <- gradient_descent_stochastic(X_tr, y_tr_encoded, alpha=0.02, max_iter = 3000,  plot=T)
 
 pred_st<- linear_classifier(X_te, result_st$param)
 
@@ -588,4 +593,4 @@ accuracy_st <- sum(pred_st == y_te_encoded) / length(y_te_encoded)
 cat(paste("Accuracy of the model:", accuracy_st))
 ```
 
-In terms of accuracy we can observe that updating the parameters for each iteration on a single data point decrease the performances by a little, however the difference is not crucial. We can easily verify that for the same value of alpha, the previous implementation of the GD was much faster than this one. It is worth mentioning that this is true in this specific case because the feature matrix we are dealing with is very sparse and so we were able to optimize the memory load and running time for the computation. Whenever this does not hold true, the stochastic version of the algorithm may be the best approach to avoid loading the data all at once. 
+It is worth mentioning that this is true in this specific case because the feature matrix we are dealing with is very sparse and so we were able to optimize the memory load and running time for the computation. Whenever this does not hold true, the stochastic version of the algorithm may be the best approach to avoid loading the data all at once. 
