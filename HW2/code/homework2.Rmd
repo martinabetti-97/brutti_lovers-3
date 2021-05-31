@@ -36,6 +36,13 @@ header-includes:
 - \newcommand{\efun}{\end{array}\right.}
 ---
 
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
