@@ -1,5 +1,5 @@
 ---
-title: "HOMEWORK 01"
+title: "HOMEWORK 02"
 author: "G01: Betti, D'Arrigo, Masci, Mata Naranjo"
 output: html_document
 header-includes:
@@ -59,7 +59,7 @@ library(DT)
 
 <br>
 
-### 1. Define the Bayes classifier/strategy and briefly explain its role/importance in classification/prediction.
+### Define the Bayes classifier/strategy and briefly explain its role/importance in classification/prediction.
 
 <br>
 
@@ -67,7 +67,7 @@ Our usual initial set up for statistical learning is made of data that is random
 
 <br>
 
-### 2. Find (with pen and paper) the Bayes classification rule $h_{opt}(x)$.
+### Find (with pen and paper) the Bayes classification rule $h_{opt}(x)$.
 
 <br>
 
@@ -108,7 +108,7 @@ h_{opt}(x) = \I\bigg(\frac{\I_{[-1, 3]}(x)}{\I_{[-1, 3]}(x)+\I_{[-3, 1]}(x)} - \
 
 <br>
 
-### 3. Simulate n = 250 data from the joint data model p(y, x) = p(x | y) · p(y) described above, and then:
+### Simulate n = 250 data from the joint data model p(y, x) = p(x | y) · p(y) described above, and then:
 
 #### a. Plot the data together with the regression function that defines $h_{opt}(x)$
 
@@ -276,7 +276,12 @@ set.seed(123)
 ```
 
 
-# Implementation of the gradient descent algorithm for the linear regression classifier
+
+# Part 2 - Gradient descent algorithm
+
+<br><br>
+
+## Implementation of the gradient descent algorithm for the linear regression classifier
 
 <br><br>
 
@@ -461,7 +466,7 @@ Since we know that $\mathbb{X}^T \mathbb{X}$ may be unstable, we will also check
 
 <br>
 
-```{r correlation, eval=FALSE, fig.height=5, fig.width=10, include=FALSE}
+```{r correlation, fig.height=5, fig.width=10}
 correlation = cor(X_tr)
 diag(correlation) <- 0
 hist(correlation, main = 'Correlation among features', col='#edf2fb', ylab = 'Frequency')
@@ -547,7 +552,7 @@ print(paste("Accuracy of the model:", accuracy))
 
 <br>
 
-The stochastic version of the gradient descent may be implemented in many different ways, which may be more or less suitable depending on the dataset. In the *mini-batch* version we compute the gradient using a subset of *m* randomly selected observations at each iteration, while in the more "extreme" case of the *online* stochastic GD, at each iteration we estimate the gradient and update $\beta$ for a single observation. Lastly, there's a "hybrid" version of the stochastic GD for which $\beta$ is updated based on a single observation but at each iteration, called *epoch*, we actually consider a mini-batch of *m* observations to compute the ER and update the learning rate to $\alpha/t$, where *t* is the epoch. Below we provide the code for each of the three approaches.
+The stochastic version of the gradient descent may be implemented in many different ways, which may be more or less suitable depending on the data set. In the *mini-batch* version we compute the gradient using a subset of *m* randomly selected observations at each iteration, while in the more "extreme" case of the *online* stochastic GD, at each iteration we estimate the gradient and update $\beta$ for a single observation. Lastly, there's a "hybrid" version of the stochastic GD for which $\beta$ is updated based on a single observation but at each iteration, called *epoch*, we actually consider a mini-batch of *m* observations to compute the ER and update the learning rate to $\alpha/t$, where *t* is the epoch. Below we provide the code for each of the three approaches.
 
 <br>
 
@@ -796,7 +801,7 @@ GD_stochastic_hybrid <- function(X, Y, alpha=0.5, max_iter=100, m=500, tol=0.001
 
 <br>
 
-The dataset we are using has a very large number of observations, so we discarded the "online" approach. In fact, in order to consider all of the observation at list once, we would have to do more than 60k iterations. On top of that, we would not be able to optimize this computation since each iteration is dependent on the previous.  Finally we could either apply the *mini-batch* or *hybrid* version of the algorithm; in the first case we would simply consider a subset of observations at each iteration instead of the whole matrix, while in the second case, given that we only consider a single observation for the update, $\mathbb{X}$ will be a vector representing all the features of a single point and $\mathbf{Y}$ will be a single integer (0 or 1) which is the true value of Y for the observation. 
+The data set we are using has a very large number of observations, so we discarded the "online" approach. In fact, in order to consider all of the observation at least once, we would have to do more than 149k iterations. On top of that, we would not be able to optimize this computation since each iteration is dependent on the previous.  Finally we could either apply the *mini-batch* or *hybrid* version of the algorithm; in the first case we would simply consider a subset of observations at each iteration instead of the whole matrix, while in the second case, given that we only consider a single observation for the update, $\mathbb{X}$ will be a vector representing all the features of a single point and $\mathbf{Y}$ will be a single integer (0 or 1) which is the true value of Y for the observation. 
 
 The rationale behind the stochastic approach is based on the assumption that the noise due to the sampling process will cancel out, however we expect it to have some effects on the performance. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the one in the classical batch implementation.
 
@@ -804,22 +809,22 @@ Being aware of the huge amount of time required for the execution, we will only 
 
 <br>
 
-```{r train_mini, echo=TRUE, warning=FALSE}
+```{r train_mini, echo=TRUE, warning=FALSE, fig.align='center', fig.width=18, fig.height=10}
 result_mb <- GD_stochastic_mb(X_tr, y_tr_encoded,  gradient_linear, alpha=0.4, m=400, max_iter=1000, plot=T, verbose=100)
 pred_mb <- linear_classifier(X_te, result_mb$param)
 accuracy_mb <- sum(pred_mb == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_mb))
 ```
 
-```{r train_online, echo=TRUE, warning=FALSE}
+```{r train_online, echo=TRUE, warning=FALSE, fig.align='center', fig.width=18, fig.height=10}
 result_online <- GD_stochastic_online(X_tr, y_tr_encoded, alpha=0.4, max_iter=5000,  plot=T, verbose=100)
 pred_online <- linear_classifier(X_te, result_online$param)
 accuracy_online <- sum(pred_online == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_online))
 ```
 
-```{r train_hybrid, eval=FALSE, warning=FALSE}
-result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m=50, max_iter=50, plot=T, verbose=90)
+```{r train_hybrid, warning=FALSE, fig.align='center', fig.width=18, fig.height=10}
+result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m=100, max_iter=50, plot=T, verbose=90)
 pred_hybrid <- linear_classifier(X_te, result_hybrid$param)
 accuracy_hybrid <- sum(pred_hybrid == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_hybrid))
@@ -828,7 +833,7 @@ cat(paste("Accuracy of the model:", accuracy_hybrid))
 
 We can appreciate how, using the same learning rate, the *online* version of the algorithm doesn't show any "converging" trend after 5000 iterations, while the other two start converging after a few iterations. These results suggest that the parameters specified for the training are to be evaluated for the specific implementation. 
 
-Finally let's make a comparison between the batch and the stochastic version of the GD algorithm. According to our tests on this dataset, the batch GD computation time and performances outplay those of its stochastic counterpart. However, this is true for this specific case due to the fact that the feature matrix we are dealing with is very sparse and so we were able to optimize both the memory load and running time for the computation on the whole matrix through a fast pre-computation. Whenever this does not hold true, the stochastic version of the algorithm may actually be the best approach to avoid loading the data all at once and to reduce the amount of data processed at each iteration. 
+Finally let's make a comparison between the batch and the stochastic version of the GD algorithm. According to our tests on this data set, the batch GD computation time and performances outplay those of its stochastic counterpart. However, this is true for this specific case due to the fact that the feature matrix we are dealing with is very sparse and so we were able to optimize both the memory load and running time for the computation on the whole matrix through a fast pre-computation. Whenever this does not hold true, the stochastic version of the algorithm may actually be the best approach to avoid loading the data all at once and to reduce the amount of data processed at each iteration. 
 
 <br>
 
