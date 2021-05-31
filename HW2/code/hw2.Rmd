@@ -1,7 +1,9 @@
 ---
 title: "HOMEWORK 01"
-author: "G01: Betti, D'Arrigo, Masci, Mata Naranjo"
-output: html_document
+author: 'G01: Betti, D''Arrigo, Masci, Mata Naranjo'
+output:
+  pdf_document: default
+  html_document: default
 header-includes:
 - \usepackage{bbold}
 - \usepackage{hyperref}
@@ -369,7 +371,7 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.000001, bet
     plot(seq(1,length(emp_risk_hist[2:max_iter])), emp_risk_hist[2:max_iter],
          xlab="iter", ylab="ER", main="Gradient descent", 
          lty = 1, type='s', col = "coral")
-
+  
   return(list(param=beta, emp_risk_hist=emp_risk_hist[2:max_iter+1]))
 }
 
@@ -498,7 +500,6 @@ Finally, the model is trained:
 ```{r training, fig.align='center', fig.width=18, fig.height=10}
 
 result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.4, max_iter=1000, plot=T, verbose = 10)
-
 ```
 
 <br>
@@ -511,86 +512,229 @@ Evaluating the model on the test set, the accuracy after training is:
 y_te_encoded <- encode(y_te)
 
 pred <- linear_classifier(X_te, result$param)
-
-accuracy <- sum(pred == y_te_encoded) / length(y_te_encoded)
-
+accuracy <- sum(pred == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy))
 ```
 
 ### Stochastic Implementation
 
-For the stochastic implementation of the gradient descent at each iteration we consider a single data point of the original training set, which is drawn at random. Since we only consider a single point, we don't need to compute the gradient for the whole matrix since for each iteration the gradient is defined as the product $\mathbb{X}^T \mathbb{X}$ where $\mathbb{X}$ is a vector representing all the features of the point. The $\mathbf{Y}$ is instead represented by a single integer 0 or 1 which is the true value of Y for the data point. 
+<br>
 
-This approach is based on the assumption that the noise of the sampling will cancel out, however we expect it to have some effects on the performance, especially on the ER. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the one in batch implementation, let's check.
+The stochastic version of the gradient descent may be implemented in many different ways, which may be more or less suitable depending on the dataset. In the *mini-batch* version we compute the gradient using a subset of *m* of randomly selected observations at each iteration, while in the more "extreme" case of the *online* stochastic GD, at each iteration we estimate the gradient and update $\beta$ for a single observation. Lastly there's a "hybrid" version of the stochastic GD for which $\beta$ is updated based on a single observation but at each iteration, called *epoch* we actually consider a mini-batch of *m* observation to compute the ER and update the learning rate to $\alpha/t$, where *t* is the epoch. Below we provide the code for each of the three approaches.
 
-```{r}
-# Define the gradient descent function
-gradient_descent_stochastic <- function(X, Y, alpha=0.5, max_iter=100, tol=0.000001, beta=NULL, plot=FALSE) {
- 
-  t_0 <- Sys.time()
-  n <- dim(X)[1] # number of observations (data points)
-  d <- dim(X)[2] # number of features
+<br>
 
-  if(is.null(beta))
-    beta <- matrix(rep(0,d+1))
-  
-  emp_risk_hist <- rep(0, max_iter+1)
-  
-  print("Entering gradient loop...")  
-  
-  # Gradient loop
-  for(i in 1:max_iter) {
+```{r online}
 
-    #sampling one data point
-    idx <- sample(seq(1, n), size = 1, replace = FALSE)
+GD_stochastic_online <- function(X, Y, alpha=0.5, max_iter=100, tol=0.000001, beta=NULL, plot=FALSE) {
+
+    t_0 <- Sys.time()
+    n <- dim(X)[1] # number of observations (data points)
+    d <- dim(X)[2] # number of features
     
+    if(is.null(beta))
+    beta <- matrix(c(10,rep(0,d)))
     
-    X.T_X <- t(X[idx,]) %*% X[idx,] * 2 # n = 1 ?
-    X.T_Y <- t(X[idx,]) %*% X[idx,] * Y[idx] * 2
-    grad <-  X.T_X[1] * beta - X.T_Y[1]
-  
-    # update alpha
-    alpha_adj = alpha/i
+    emp_risk_hist <- rep(0, max_iter+1)
     
-    # Update beta
-    beta <- beta - alpha_adj  * grad 
-
-    # Compute and store the ER value of the i-th iteration
-    emp_risk_hist[i+1] -> cbind(1,X[idx,]) %*% beta - Y[idx]
+    print("Entering gradient loop...") 
     
-    # Check convergence
-    if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
-      max_iter <- i
-      break
+    # Gradient loop
+    for(i in 1:max_iter) {
+    
+      #sampling one data point
+      idx <- sample(seq(1, n), size = 1, replace = FALSE)
+      
+      X.T_X <- tcrossprod(cbind(1,matrix(X[idx,], nrow=1))) * 2 
+      X.T_Y <- cbind(1,matrix(X[idx,], nrow=1)) * Y[idx] * 2
+      grad <- X.T_X[1] * beta - X.T_Y[1]
+      
+      # update alpha
+      alpha_adj = alpha/i
+      
+      # Update beta
+      beta <- beta - alpha_adj * grad 
+      
+      # Compute and store the ER value of the i-th iteration
+      emp_risk_hist[i+1] <- cbind(1,matrix(X[idx,], nrow=1)) %*% beta - Y[idx]
+      
+      # Check convergence
+     if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
+        max_iter <- i
+        break
+      }
+      
     }
     
-  }
+    print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+    
+    print(Sys.time() - t_0)
   
-  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+    if(plot)
+      plot(seq(1,length(emp_risk_hist[2:max_iter])), emp_risk_hist[2:max_iter],
+           xlab="iter", ylab="ER", main="Gradient descent", 
+           lty = 1, type='s', col = "coral")
   
-  print(Sys.time() - t_0)
-
-  if(plot)
-    plot(seq(1,length(emp_risk_hist[2:max_iter])), emp_risk_hist[2:max_iter],
-         xlab="iter", ylab="ER", main="Gradient descent", 
-         lty = 1, type='s', col = "coral")
-
-  return(list(param=beta, emp_risk_hist=emp_risk_hist[2:max_iter+1]))
-
+    return(list(param=beta, emp_risk_hist=emp_risk_hist[2:max_iter+1]))
 }
-
-  
 ```
 
+```{r, minibatch}
+
+GD_stochastic_mb <- function(X, Y, G, alpha=0.5, max_iter=100, m = 500, tol=0.000001, beta=NULL, plot=FALSE) {
+
+    t_0 <- Sys.time()
+    n <- dim(X)[1] # number of observations (data points)
+    d <- dim(X)[2] # number of features
+    
+    if(is.null(beta))
+    beta <- matrix(c(10,rep(0,d)))
+    
+    emp_risk_hist <- rep(0, max_iter+1)
+    
+    print("Entering gradient loop...") 
+    
+    
+    # Gradient loop
+    for(i in 1:max_iter) {
+    
+      #sampling one data point
+      idx <- sample(seq(1, n), size = m, replace = FALSE)
+      
+      # Update alpha
+      alpha_adj = alpha/i
+      
+      X.T_X <- crossprod(cbind(1,X[idx,])) * (2 / m) 
+      X.T_Y <- crossprod(cbind(1,X[idx,]), Y[idx]) * (2 / m)
+      
+      grad <- G(X.T_X, X.T_Y, beta)
+
+      # Update beta
+      beta <- beta - alpha_adj * grad 
+  
+      # Compute and store the ER value of the i-th iteration
+      emp_risk_hist[i+1] <- empirical_risk(f_reg(X, beta), Y)
+      
+      
+      # Check convergence
+     if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
+        max_iter <- i
+        break
+      }
+      
+    }
+    
+    print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+    
+    print(Sys.time() - t_0)
+  
+    if(plot)
+      plot(seq(1,length(emp_risk_hist[2:max_iter])), emp_risk_hist[2:max_iter],
+           xlab="iter", ylab="ER", main="Gradient descent", 
+           lty = 1, type='s', col = "coral")
+  
+    return(list(param=beta, emp_risk_hist=emp_risk_hist[2:max_iter+1]))
+}
+```
+
+```{r, hybrid}
+
+GD_stochastic_hybrid <- function(X, Y, alpha=0.5, max_iter=100, m = 500, tol=0.000001, beta=NULL, plot=FALSE) {
+
+    t_0 <- Sys.time()
+    n <- dim(X)[1] # number of observations (data points)
+    d <- dim(X)[2] # number of features
+    
+    if(is.null(beta))
+    beta <- matrix(c(10,rep(0,d)))
+    
+    emp_risk_hist <- rep(0, max_iter+1)
+    
+    print("Entering gradient loop...") 
+    
+    # Gradient loop
+    for(t in 1:max_iter) {
+      
+      # creating batches from shuffled X
+      idxs <- sample(seq(1, n), size = m, replace = FALSE)
+      
+      # Update alpha
+      alpha_adj = alpha/t
+      
+      for (idx in idxs)
+      {
+        X.T_X <- tcrossprod(cbind(1,matrix(X[idx,], nrow=1))) * 2/m 
+        X.T_Y <- cbind(1,matrix(X[idx,], nrow=1)) * Y[idx] * 2/m
+        grad <- X.T_X[1] * beta - X.T_Y[1]
+        
+        # Update beta
+        beta <- beta - alpha_adj * grad 
+      }
+      
+      # Compute and store the ER value of the i-th iteration
+      emp_risk_hist[t+1] <- empirical_risk(f_reg(X[idxs,], beta), Y[idxs])
+      
+      # Check convergence
+      if(abs(emp_risk_hist[t]-emp_risk_hist[t+1]) <= tol) {
+        max_iter <- t
+        break
+      }
+      
+    }
+    
+    print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+    
+    print(Sys.time() - t_0)
+  
+    if(plot)
+      plot(seq(1,length(emp_risk_hist[2:max_iter])), emp_risk_hist[2:max_iter],
+           xlab="iter", ylab="ER", main="Gradient descent", 
+           lty = 1, type='s', col = "coral")
+  
+    return(list(param=beta, emp_risk_hist=emp_risk_hist[2:max_iter+1]))
+}
+```
+
+<br>
+
+The dataset we are using has a very large number of observations, so we discarded the "online" approach. In fact, in order to consider all of the observation at list once, we would have to do more than 60k iterations. On top of that, we would not be able to optimize this computation since each iteration is dependent on the previous.  Finally we could either apply the *mini-batch* or *hybrid* version of the algorithm; in the first case we would simply consider a subset of observations at each iteration instead of the whole matrix, while in the second case, given that we only consider a single observation for the update, $\mathbb{X}$ will be a vector representing all the features of a single point and $\mathbf{Y}$ will be a single integer (0 or 1) which is the true value of Y for the observation. 
+
+The rationale behind the stochastic approach is based on the assumption that the noise due to the sampling process will cancel out, however we expect it to have some effects on the performance. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the one in the classical batch implementation.
+
+Being aware of the huge amount time required for the execution, we will only test these three approaches for a reduced number of iteration that will help to give an idea about their trend.
+
+<br>
 
 ```{r echo=TRUE, warning=FALSE}
-result_st <- gradient_descent_stochastic(X_tr, y_tr_encoded, alpha=0.02, max_iter = 3000,  plot=T)
 
-pred_st<- linear_classifier(X_te, result_st$param)
+result_mb <- GD_stochastic_mb(X_tr, y_tr_encoded,  gradient_linear, alpha=0.4, m = 400, max_iter = 1000,  plot=T)
+pred_mb <- linear_classifier(X_te, result_mb$param)
+accuracy_mb <- sum(pred_mb == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_mb))
 
-accuracy_st <- sum(pred_st == y_te_encoded) / length(y_te_encoded)
-
-cat(paste("Accuracy of the model:", accuracy_st))
 ```
 
-It is worth mentioning that this is true in this specific case because the feature matrix we are dealing with is very sparse and so we were able to optimize the memory load and running time for the computation. Whenever this does not hold true, the stochastic version of the algorithm may be the best approach to avoid loading the data all at once. 
+```{r echo=TRUE, warning=FALSE}
+
+result_online <- GD_stochastic_online(X_tr, y_tr_encoded, alpha=0.4, max_iter = 5000,  plot=T)
+pred_online <- linear_classifier(X_te, result_online$param)
+accuracy_online <- sum(pred_online == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_online))
+
+```
+
+```{r echo=TRUE, warning=FALSE}
+
+result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m = 100, max_iter = 500,  plot=T)
+pred_hybrid <- linear_classifier(X_te, result_hybrid$param)
+accuracy_hybrid <- sum(pred_hybrid == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_hybrid))
+
+```
+<br>
+
+We can appreciate how, using the same learning rate, the *online* version of the algorithm doesn't show any "converging" trend after 5000 iterations, while the other two start converging after a few iterations. These results suggest that the parameters specified for the training are to be evaluated for the specific implementation. 
+
+Finally let's make a comparison between the batch and the stochastic version of the GD algorithm. According to our tests on this dataset, the batch GD computation time and performances outplay those of its stochastic counterpart. However, this is true for this specific case due to the fact that the feature matrix we are dealing with is very sparse and so we were able to optimize both the memory load and running time for the computation on the whole matrix through a fast pre-computation. Whenever this does not hold true, the stochastic version of the algorithm may actually be the best approach to avoid loading the data all at once and to reduce the amount of data processed at each iteration. 
+
+<br>
