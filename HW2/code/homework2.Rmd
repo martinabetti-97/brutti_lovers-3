@@ -249,7 +249,9 @@ hist(res_bayes, prob=TRUE, main="Distribution of \n Bayes Loss", xlab="Loss", co
 
 ```
 
-The logisitic regression seems to outperform the bayes classifier, but not by much. The reason for which we consider that the logistic regression is able to classify better us because it it able to handle data points that fall in the interval $x \in [-1, 1]$ in a more flexible manner, while the Bayes Classifier will always assign these points to the class $Y=1$. Theoretically, the Bayes approach should be the ideal classifier (since the data points are equally distributed among $Y=1$ and $Y=0$ in this interval), however since our data generating process only generates 250 points, the real  distribution in the $[-1, 1]$ interval is probably not equally distributed.
+The previous plots show the distribution of number of miss-classified data points over 1000 simulations. We see how in both cases the distribution has a Gaussian-like shape. However, repeating this process multiple times we have observed  that the Bayes Classifier gives a more stable loss distribution, while the Logistic Regression leads to some more skewed and with higher variance distributions. 
+
+The Logistic Regression Classifier outperforms the Bayes classifier, however, not by much. The reason for which Logistic Regression is able to classify better is due to the fact that it classifies data points dynamically in the interval $x \in [-1, 1]$, while the Bayes Classifier will always assign these points to the class $Y=1$. Theoretically, the Bayes approach should be the ideal classifier (since the data points are equally distributed among $Y=1$ and $Y=0$ in this interval), however since our data generating process only generates 250 points, the real distribution in the $[-1, 1]$ interval is not exactly equally distributed.
 
 <br>
 
@@ -809,8 +811,8 @@ accuracy_online <- sum(pred_online == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_online))
 ```
 
-```{r eval=FALSE, warning=FALSE, include=FALSE}
-result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m=300, max_iter=50, plot=T, verbose=90)
+```{r train_hybrid, eval=FALSE, warning=FALSE}
+result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m=50, max_iter=50, plot=T, verbose=90)
 pred_hybrid <- linear_classifier(X_te, result_hybrid$param)
 accuracy_hybrid <- sum(pred_hybrid == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_hybrid))
