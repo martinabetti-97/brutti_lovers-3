@@ -725,7 +725,7 @@ cat(paste("Accuracy of the model:", accuracy_online))
 
 ```{r echo=TRUE, warning=FALSE}
 
-result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m = 100, max_iter = 500,  plot=T)
+result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m = 300, max_iter = 100,  plot=T)
 pred_hybrid <- linear_classifier(X_te, result_hybrid$param)
 accuracy_hybrid <- sum(pred_hybrid == y_tr_encoded) / length(y_tr_encoded)
 cat(paste("Accuracy of the model:", accuracy_hybrid))
