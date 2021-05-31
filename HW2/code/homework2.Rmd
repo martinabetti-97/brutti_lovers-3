@@ -249,9 +249,13 @@ hist(res_bayes, prob=TRUE, main="Distribution of \n Bayes Loss", xlab="Loss", co
 
 ```
 
-The logisitic regression seems to outperform the bayes classifier, but not by much. The reason for which we consider that the logistic regression is able to classify better us because it it able to handle data points that fall in the interval $x \in [-1, 1]$ in a more flexible manner, while the Bayes Classifier will always assign these points to the class $Y=1$. Theoretically, the Bayes approach should be the ideal classifier (since the data points are equally distirbuted among $Y=1$ and $Y=0$ in this interval), however since our data generating process only generates 250 points, the real  disitrbution in the $[-1, 1]$ interval is probably not equally distributed.
+The logisitic regression seems to outperform the bayes classifier, but not by much. The reason for which we consider that the logistic regression is able to classify better us because it it able to handle data points that fall in the interval $x \in [-1, 1]$ in a more flexible manner, while the Bayes Classifier will always assign these points to the class $Y=1$. Theoretically, the Bayes approach should be the ideal classifier (since the data points are equally distributed among $Y=1$ and $Y=0$ in this interval), however since our data generating process only generates 250 points, the real  distribution in the $[-1, 1]$ interval is probably not equally distributed.
 
+<br>
 
+---
+
+<br><br><br>
 
 
 <!-- Beginning of the second part  -->
@@ -265,16 +269,18 @@ set.seed(123)
 
 # Implementation of the gradient descent algorithm for the linear regression classifier
 
+<br><br>
+
 In the following, the implementation of the gradient descent is provided. Let's recall that the linear regression classifier is such that 
 
 \begin{equation}
-  h_{emp}(\mathbf{x}) = \mathbb{I}(f(\mathbf{x} \geq \frac{1}{2}))
+  h(\mathbf{x}) = \mathbb{I}\Big(f(\mathbf{x}) \geq \frac{1}{2}\Big)
 \end{equation} 
 
-where $f_{emp}(\mathbf{x}) = \arg_{f\in\mathcal{F}}\min \hat{R}(f) = \mathbf{x}^T\mathbf{\beta} + x_0\beta_0$, $x_0=1$. From now on, we assume that the design matrix $\mathbb{X}$ contains also $x_0$ and hence $\mathbf{\beta} \leftarrow [\mathbf{\beta}, \beta_0]^T$. Then, the gradient is equal to 
+where $f(\mathbf{x}) = \arg_{f\in\mathcal{F}}\min \hat{R}(f) = \mathbf{x}^T\mathbf{\beta} + x_0\beta_0$, $x_0=1$. From now on, we assume that the design matrix $\mathbb{X}$ contains also $x_0$ and hence $\mathbf{\beta} \leftarrow [\mathbf{\beta}, \beta_0]^T$. Then, the gradient is equal to 
 
 \begin{equation}
-  \nabla \hat{R}(\mathbf{\beta}) = \nabla (\frac{1}{n} \Vert (\mathbf{Y} - \mathbb{X}\mathbf{\beta} \Vert_2^2) = \mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}
+  \nabla \hat{R}(\mathbf{\beta}) = \nabla \Bigg(\frac{1}{n} \Vert (\mathbf{Y} - \mathbb{X}\mathbf{\beta} \Vert_2^2\Bigg) = \mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}
 \end{equation}
 
 Finally, the update rule of the gradient descent algorithm is
@@ -315,7 +321,8 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.000001, bet
   # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
   # :param plot : boolean; plot the empirical risk history if TRUE 
   # :param verbose : level of verbosity; if 0, only starting and ending are notified; 
-  #                   if > 0, the higher the value, the more verbose the function
+  #                   if > 0, the higher the value, the more verbose the function; if > 99, a message is printed 
+  #                   after 100 iterations
   #
   # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
   ###
@@ -363,7 +370,7 @@ gradient_descent <- function(X, Y, G, alpha=0.5, max_iter=100, tol=0.000001, bet
     
   }
   
-  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter+1]))
   
   print(Sys.time() - t_0)
 
@@ -423,17 +430,52 @@ Load the Amazon reviews data set:
 load("../data/amazon_review_clean.RData")
 ```
 
-The design matrix $X$ contains the TF-IDF scores for each word (feature) in each review. Specifically, it has a (`r dim(X_tr)`) size.
+<br>
+
+The design matrix $\mathbb{X}$ contains the TF-IDF scores for each word (feature) in each review. Specifically, it has a (`r dim(X_tr)`) size. 
+
+Because among the features there are also some that seem to be not so relevant - such as articles, prepositions and punctuation - the words that are recognized to be stop words have been removed.
 
 <br>
 
 ```{r design_matrix, echo=FALSE}
+sw = stopwords::stopwords('english')
+ascii = rawToChar(as.raw(0:127), multiple=TRUE)
+X_tr = X_tr[,!(colnames(X_tr) %in% c(sw,ascii[grepl('[[:punct:]]', ascii)]))]
+X_te = X_te[,!(colnames(X_te) %in% c(sw,ascii[grepl('[[:punct:]]', ascii)]))]
 round(as.matrix(X_tr[1:10, 1:10]), 2)
 ```
 
 <br>
 
-It may be noticed that such design matrix, even if apparently huge, is extremely sparse. In order to compress it, saving space and speeding the computations, the original matrices have been converted into `sparseMatrix` objects of the `Matrix` library. It can be shown that, relying on this library, the gain of the performance in terms of the computation speed is very relevant.
+Since we know that $\mathbb{X}^T \mathbb{X}$ may be unstable, we will also check that we don't have any correlated features (excluding auto-correlation).
+
+<br>
+
+```{r correlation, eval=FALSE, fig.height=5, fig.width=10, include=FALSE}
+correlation = cor(X_tr)
+diag(correlation) <- 0
+hist(correlation, main = 'Correlation among features', col='#edf2fb', ylab = 'Frequency')
+```
+
+<br>
+
+At this stage, it is worth to point out that such classifier induces some further considerations. Indeed, differently from the logistic regression classifier, the linear regression classifier doesn't explicitly map the values of the regression function into $[0,1]$, whatever great they are; hence, when computing the gradient, the initialization of the the parameters $\mathbf{\beta}$ and the learning rate $\alpha$ play an even more crucial role: $\alpha$ must balance the potentially huge contribute of the gradient $\mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}$, which for such a high-sized matrix $\mathbb{X}$ with positive values greater than 1 and for $\mathbf{\beta} \neq [0,0,...,0]^T$ may diverge or incur in numeric overflows. For this reasoning, initially the maximum value of $\alpha$ for which the algorithm converges was found to be 0.001. 
+
+But, such a small learning rate causes the algorithm to converge after many iterations: in the trials, almost 4000 iterations were required to reach the convergence with a good (small) approximation tolerance.
+
+Even though train the model on this data set for such many iterations is not prohibitive - the training takes just about 15 minutes -, to speed up the convergence and improve the stability and the final performance of the model, a normalization step $x_i^{(j)} = \frac{x^{(j)}_i - \min{x^{(j)}}}{\max{x^{(j)}} - \min{x^{(j)}}}$ to map all the features values in the interval $[0,1]$ is performed before training; this interval allows to keep $\mathbb{X}$ sparse, making the optimization about which we will further discuss still possible:
+
+<br>
+
+```{r normalization}
+X_tr = apply(X_tr,2,function(x){x/max(x)})
+X_te = apply(X_te,2,function(x){x/max(x)})
+```
+
+<br>
+
+It may be noticed that such design matrix, even if apparently huge, is extremely sparse. In order to compress it, saving space and speeding the computations, the original matrices have been converted into `sparseMatrix` objects of the `Matrix` library. It can be shown that, relying on this library, the gain of the performance in terms of the computation speed is really remarkable:
 
 <br>
 
@@ -448,17 +490,7 @@ Looking at the environment variables, it is impressive to notice that the  desig
 
 <br>
 
-At this stage, it is worth to point out that such classifier induces some further considerations. Indeed, differently from the logistic regression classifier, the linear regression classifier doesn't explicitly map the values of the regression function into $[0,1]$, whatever great they are; hence, when computing the gradient, the initialization of the the parameters $\mathbf{\beta}$ and the learning rate $\alpha$ play an even more crucial role: $alpha$ must balance the potentially huge contribute of the gradient $\mathbb{X}^T \mathbb{X}\mathbf{\beta} - \mathbb{X}^T \mathbf{Y}$, which for such a high-sized matrix $\mathbb{X}$ with positive values greater than 1 and for $\mathbf{\beta} \neq [0,0,...,0]^T$ may diverge or incur in numeric overflows. For this reasoning, initially the maximum value of $\alpha$ for which the algorithm converges was found to be 0.001. But, such a small learning rate causes the algorithm to converge after many iterations: in the trials, almost 4000 iterations were required to reach the convergence with a good (small) approximation tolerance.
-
-Even though train the model on this data set for such many iterations is not prohibitive - the training takes just about 15 minutes -, to speed up the convergence and improve the stability and the final performance of the model, a normalization step $x_i^{(j)} = \frac{x^{(j)}_i - \min{x^{(j)}}}{\max{x^{(j)}} - \min{x^{(j)}}}$ to map all the features values in the interval $[0,1]$ is performed before training; this interval allows to keep $\mathbb{X}$ sparse, making the aforementioned optimization still possible. Moreover, looking at the features, the words that are recognized to be stop words are removed.
-
-<br>
-
-<!-- Code for normalizing the features and for removing the stop words -->
-
-<br>
-
-As a final step before going through the actual training of the model, the $\mathbf{Y}$ labels are encoded mapped to $\{0, 1\}$.
+As a final step before going through the actual training of the model, the $\mathbf{Y}$ labels are mapped to $\{0, 1\}$.
 
 <br>
 
@@ -480,7 +512,7 @@ Finally, the model is trained:
 
 ```{r training, fig.align='center', fig.width=18, fig.height=10}
 
-result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.001, max_iter=100, plot=T, verbose = 10)
+result <- gradient_descent(X_tr, y_tr_encoded, gradient_linear, alpha=0.4, max_iter=1000, plot=T, verbose=100)
 
 ```
 
@@ -500,7 +532,296 @@ accuracy <- sum(pred == y_te_encoded) / length(y_te_encoded)
 print(paste("Accuracy of the model:", accuracy))
 ```
 
+<br><br>
 
+### Stochastic Implementation
+
+<br>
+
+The stochastic version of the gradient descent may be implemented in many different ways, which may be more or less suitable depending on the dataset. In the *mini-batch* version we compute the gradient using a subset of *m* randomly selected observations at each iteration, while in the more "extreme" case of the *online* stochastic GD, at each iteration we estimate the gradient and update $\beta$ for a single observation. Lastly, there's a "hybrid" version of the stochastic GD for which $\beta$ is updated based on a single observation but at each iteration, called *epoch*, we actually consider a mini-batch of *m* observations to compute the ER and update the learning rate to $\alpha/t$, where *t* is the epoch. Below we provide the code for each of the three approaches.
+
+<br>
+
+```{r online}
+GD_stochastic_online <- function(X, Y, alpha=0.5, max_iter=100, tol=0.001, beta=NULL, plot=FALSE, verbose=95) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
+  # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param verbose : level of verbosity; if 0, only starting and ending are notified; 
+  #                   if > 0, the higher the value, the more verbose the function; if > 99, a message is printed 
+  #                   after 100 iterations
+  #
+  # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
+  ###
+  
+  t_0 <- Sys.time(); print(t_0)
+  
+  verbose = ifelse(verbose > 99, 100, 100 - verbose)
+  
+  notify <- ifelse(verbose > 0, function(i, ER) {
+  if((i %% verbose) == 0) print(paste("Iteration", i, " ER:", ER))
+  }, function(i, ER) {})
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  
+  if(is.null(beta))
+    beta <- matrix(c(10,rep(0,d)))
+  
+  emp_risk_hist <- rep(0, max_iter+1)
+  
+  print("Entering gradient loop...") 
+  
+  # Gradient loop
+  for(i in 1:max_iter) {
+  
+    #sampling one data point
+    idx <- sample(seq(1, n), size = 1, replace = FALSE)
+    
+    X.T_X <- tcrossprod(cbind(1,matrix(X[idx,], nrow=1))) * 2 
+    X.T_Y <- cbind(1,matrix(X[idx,], nrow=1)) * Y[idx] * 2
+    grad <- X.T_X[1] * beta - X.T_Y[1]
+    
+    # update alpha
+    alpha_adj = alpha/i
+    
+    # Update beta
+    beta <- beta - alpha_adj * grad 
+    
+    # Compute and store the ER value of the i-th iteration
+    emp_risk_hist[i+1] <- empirical_risk(f_reg(matrix(X[idx,], nrow=1), beta), Y[idx,])
+    
+    notify(i, emp_risk_hist[i+1])
+    
+    # Check convergence
+   if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
+      max_iter <- i
+      break
+    }
+    
+  }
+  
+  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter+1]))
+  
+  print(Sys.time() - t_0)
+  
+  if(plot)
+    plot(seq(1,max_iter), emp_risk_hist[2:(max_iter+1)],
+         xlab="iter", ylab="ER", main="Gradient descent", 
+         lty = 1, type='s', col = "coral")
+  
+  return(list(param=beta, emp_risk_hist=emp_risk_hist[-1]))
+}
+```
+
+```{r, minibatch}
+GD_stochastic_mb <- function(X, Y, G, alpha=0.5, max_iter=100, m=500, tol=0.001, beta=NULL, plot=FALSE, verbose=95) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param m : batch size
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
+  # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param verbose : level of verbosity; if 0, only starting and ending are notified; 
+  #                   if > 0, the higher the value, the more verbose the function; if > 99, a message is printed 
+  #                   after 100 iterations
+  #
+  # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
+  ###
+  
+  t_0 <- Sys.time(); print(t_0)
+  
+  verbose = ifelse(verbose > 99, 100, 100 - verbose)
+  
+  notify <- ifelse(verbose > 0, function(i, ER) {
+  if((i %% verbose) == 0) print(paste("Iteration", i, " ER:", ER))
+  }, function(i, ER) {})
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  
+  if(is.null(beta))
+  beta <- matrix(c(10,rep(0,d)))
+  
+  emp_risk_hist <- rep(0, max_iter+1)
+  
+  print("Entering gradient loop...") 
+  
+  
+  # Gradient loop
+  for(i in 1:max_iter) {
+  
+    #sampling one data point
+    idx <- sample(seq(1, n), size = m, replace = FALSE)
+    
+    # Update alpha
+    alpha_adj = alpha/i
+    
+    X.T_X <- crossprod(cbind(1,X[idx,])) * (2 / m) 
+    X.T_Y <- crossprod(cbind(1,X[idx,]), Y[idx]) * (2 / m)
+    
+    grad <- G(X.T_X, X.T_Y, beta)
+    # Update beta
+    beta <- beta - alpha_adj * grad 
+  
+    # Compute and store the ER value of the i-th iteration
+    emp_risk_hist[i+1] <- empirical_risk(f_reg(X[idx,], beta), Y[idx,])
+    
+    notify(i, emp_risk_hist[i+1])
+    
+    # Check convergence
+   if(abs(emp_risk_hist[i]-emp_risk_hist[i+1]) <= tol) {
+      max_iter <- i
+      break
+    }
+    
+  }
+  
+  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+  
+  print(Sys.time() - t_0)
+  
+  if(plot)
+    plot(seq(1,max_iter), emp_risk_hist[2:(max_iter+1)],
+         xlab="iter", ylab="ER", main="Gradient descent", 
+         lty = 1, type='s', col = "coral")
+  
+  return(list(param=beta, emp_risk_hist=emp_risk_hist[-1]))
+}
+```
+
+```{r, hybrid}
+GD_stochastic_hybrid <- function(X, Y, alpha=0.5, max_iter=100, m=500, tol=0.001, beta=NULL, plot=FALSE, verbose=95) {
+  ###
+  # Function to compute the gradient descent given the gradient function G.
+  # :param X : design matrix (n_observations * n_features)
+  # :param Y : ground-truth labels
+  # :param G : gradient function
+  # :param alpha : learning rate
+  # :param max_iter : maximum number of iterations; first stop condition
+  # :param m : batch size
+  # :param tol : tolerance; stop the gradient loop before max_iter is reached if the condition is met
+  # :param beta : vector of parameters; provide a custom starting vector; otherwise, a random one is chosen
+  # :param plot : boolean; plot the empirical risk history if TRUE 
+  # :param verbose : level of verbosity; if 0, only starting and ending are notified; 
+  #                   if > 0, the higher the value, the more verbose the function; if > 99, a message is printed 
+  #                   after 100 iterations
+  #
+  # :return list(beta=[vector of parameters], emp_risk_hist=[empirical risk through the iterations]) 
+  ###
+  
+  t_0 <- Sys.time(); print(t_0)
+  
+  verbose = ifelse(verbose > 99, 100, 100 - verbose)
+  
+  notify <- ifelse(verbose > 0, function(i, ER) {
+  if((i %% verbose) == 0) print(paste("Iteration", i, " ER:", ER))
+  }, function(i, ER) {})
+  
+  n <- dim(X)[1] # number of observations (data points)
+  d <- dim(X)[2] # number of features
+  
+  if(is.null(beta))
+  beta <- matrix(c(10,rep(0,d)))
+  
+  emp_risk_hist <- rep(0, max_iter+1)
+  
+  print("Entering gradient loop...") 
+  
+  # Gradient loop
+  for(t in 1:max_iter) {
+    
+    # creating batches from shuffled X
+    idxs <- sample(seq(1, n), size = m, replace = FALSE)
+    
+    # Update alpha
+    alpha_adj = alpha/t
+    
+    for (idx in idxs)
+    {
+      X.T_X <- tcrossprod(cbind(1,matrix(X[idx,], nrow=1))) * 2/m 
+      X.T_Y <- cbind(1,matrix(X[idx,], nrow=1)) * Y[idx] * 2/m
+      grad <- X.T_X[1] * beta - X.T_Y[1]
+      
+      # Update beta
+      beta <- beta - alpha_adj * grad 
+    }
+    
+    # Compute and store the ER value of the t-th epoch
+    emp_risk_hist[t+1] <- empirical_risk(f_reg(X[idxs,], beta), Y[idxs])
+    
+    notify(t, emp_risk_hist[t+1])
+    
+    # Check convergence
+    if(abs(emp_risk_hist[t]-emp_risk_hist[t+1]) <= tol) {
+      max_iter <- t
+      break
+    }
+    
+  }
+  
+  print(paste("Converged after", max_iter, "iterations", "|", "ER:", emp_risk_hist[max_iter]))
+  
+  print(Sys.time() - t_0)
+  
+  if(plot)
+    plot(seq(1,max_iter), emp_risk_hist[2:(max_iter+1)],
+         xlab="iter", ylab="ER", main="Gradient descent", 
+         lty = 1, type='s', col = "coral")
+  
+  return(list(param=beta, emp_risk_hist=emp_risk_hist[-1]))
+}
+```
+
+<br>
+
+The dataset we are using has a very large number of observations, so we discarded the "online" approach. In fact, in order to consider all of the observation at list once, we would have to do more than 60k iterations. On top of that, we would not be able to optimize this computation since each iteration is dependent on the previous.  Finally we could either apply the *mini-batch* or *hybrid* version of the algorithm; in the first case we would simply consider a subset of observations at each iteration instead of the whole matrix, while in the second case, given that we only consider a single observation for the update, $\mathbb{X}$ will be a vector representing all the features of a single point and $\mathbf{Y}$ will be a single integer (0 or 1) which is the true value of Y for the observation. 
+
+The rationale behind the stochastic approach is based on the assumption that the noise due to the sampling process will cancel out, however we expect it to have some effects on the performance. We also expect this version of the algorithm to need more iterations to converge since the information gained at each iteration is less compared to the one in the classical batch implementation.
+
+Being aware of the huge amount of time required for the execution, we will only test these three approaches for a reduced number of iteration that will help to give an idea about their trend.
+
+<br>
+
+```{r train_mini, echo=TRUE, warning=FALSE}
+result_mb <- GD_stochastic_mb(X_tr, y_tr_encoded,  gradient_linear, alpha=0.4, m=400, max_iter=1000, plot=T, verbose=100)
+pred_mb <- linear_classifier(X_te, result_mb$param)
+accuracy_mb <- sum(pred_mb == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_mb))
+```
+
+```{r train_online, echo=TRUE, warning=FALSE}
+result_online <- GD_stochastic_online(X_tr, y_tr_encoded, alpha=0.4, max_iter=5000,  plot=T, verbose=100)
+pred_online <- linear_classifier(X_te, result_online$param)
+accuracy_online <- sum(pred_online == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_online))
+```
+
+```{r eval=FALSE, warning=FALSE, include=FALSE}
+result_hybrid <- GD_stochastic_hybrid(X_tr, y_tr_encoded, alpha=0.4, m=300, max_iter=50, plot=T, verbose=90)
+pred_hybrid <- linear_classifier(X_te, result_hybrid$param)
+accuracy_hybrid <- sum(pred_hybrid == y_tr_encoded) / length(y_tr_encoded)
+cat(paste("Accuracy of the model:", accuracy_hybrid))
+```
+<br>
+
+We can appreciate how, using the same learning rate, the *online* version of the algorithm doesn't show any "converging" trend after 5000 iterations, while the other two start converging after a few iterations. These results suggest that the parameters specified for the training are to be evaluated for the specific implementation. 
+
+Finally let's make a comparison between the batch and the stochastic version of the GD algorithm. According to our tests on this dataset, the batch GD computation time and performances outplay those of its stochastic counterpart. However, this is true for this specific case due to the fact that the feature matrix we are dealing with is very sparse and so we were able to optimize both the memory load and running time for the computation on the whole matrix through a fast pre-computation. Whenever this does not hold true, the stochastic version of the algorithm may actually be the best approach to avoid loading the data all at once and to reduce the amount of data processed at each iteration. 
+
+<br>
 
 
 
