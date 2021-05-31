@@ -177,7 +177,7 @@ pre code {
 <div id="define-the-bayes-classifierstrategy-and-briefly-explain-its-roleimportance-in-classificationprediction." class="section level3">
 <h3>1. Define the Bayes classifier/strategy and briefly explain its role/importance in classification/prediction.</h3>
 <p><br></p>
-<p></p>
+<p>Our usual initial set up for statistical learning is made of data that is random in both response and feature vectors, so the X and Y vectors. We want to use training data to build a predictor, which we can also call strategy since we are in a decision-theoretical framework. There are many such predictors, one of which is the Bayes strategy, which aims at minimizing the risk (and so the expected loss) according to the following formula: <span class="math display">\[\begin{equation} s_{opt}(x) = argminR(s|x) \end{equation}\]</span> This way, rather than working out the multivariate risk function R(s) we can work one by one in the pointwise-risk and then put all of those together. In particular, the Bayes Classifier corresponds to this strategy applied to the classification task, for which we have a regression function <span class="math inline">\(f_{opt}(x)=\mathbb{P}(Y=1|X=x)\)</span> since <span class="math inline">\(Y \in \{0, 1\}\)</span>. As a result, the Bayes Classifier is: <span class="math display">\[\begin{equation} h_{opt}(x) = \mathbb{I}(f_{opt}(x) \ge \frac{1}{2}) \end{equation}\]</span></p>
 <p><br></p>
 </div>
 <div id="find-with-pen-and-paper-the-bayes-classification-rule-h_optx." class="section level3">

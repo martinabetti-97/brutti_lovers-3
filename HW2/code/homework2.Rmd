@@ -56,7 +56,7 @@ library(DT)
 
 <br>
 
-\textbf{Include here some theory...}
+Our usual initial set up for statistical learning is made of data that is random in both response and feature vectors, so the X and Y vectors. We want to use training data to build a predictor, which we can also call strategy since we are in a decision-theoretical framework. There are many such predictors, one of which is the Bayes strategy, which aims at minimizing the risk (and so the expected loss) according to the following formula: \begin{equation} s_{opt}(x) = argminR(s|x) \end{equation} This way, rather than working out the multivariate risk function R(s) we can work one by one in the pointwise-risk and then put all of those together. In particular, the Bayes Classifier corresponds to this strategy applied to the classification task, for which we have a regression function $f_{opt}(x)=\mathbb{P}(Y=1|X=x)$ since $Y \in \{0, 1\}$. As a result, the Bayes Classifier is: \begin{equation} h_{opt}(x) = \mathbb{I}(f_{opt}(x) \ge \frac{1}{2}) \end{equation}
 
 <br>
 
