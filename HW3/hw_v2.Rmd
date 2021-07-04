@@ -1,9 +1,8 @@
 ---
 title: "Final Homework"
 author: "G01 Team"
-output:
-  html_document:
-    df_print: paged
+output: pdf_document
+df_print: paged
 urlcolor: magenta
 linkcolor: cyan
 geometry: margin=1.5cm
@@ -50,6 +49,7 @@ library(keras)
 library(tensorflow)
 library(tfdatasets)
 library(kerasR)
+library(stringr)
 ```
 
 
@@ -67,11 +67,15 @@ Explain how we are going to handle the exercise and our first thoughts regarding
 df.train <- fread('data/train4final_hw.csv')
 df.test <- fread('data/test4final_hw.csv')
 
+load('HW3.RData')
+#save.image(file='HW3.RData')
+
+
 ```
 
 TODO: comment plot and strategy 
 
-![Pipeline.](assets/pipeline_final_hw_sl.png "Pipeline")
+![Pipeline.](pipeline_final_hw_sl.png "Pipeline")
 
 
 ### Build the CNN
@@ -89,7 +93,7 @@ Althought the CNN gives us very good results and a low RMSE, it lacks in interpr
 
 
 
-![CNN architecture.](assets/model.png "CNN architecture")
+![CNN architecture.](model.png "CNN architecture")
 
 
 ```{r Functions for CNN, include=FALSE, eval=FALSE}
@@ -191,37 +195,37 @@ build_network <- function() {
 
 ```{r Evaluate the CNN, eval=FALSE}
 
-#TODO: Clean the code up
-
-library(stringr)
 cat("File_Name,TrainRMSE,ValRMSE\n", file="results.csv")
 list_dir = list.files('/content')
 
+# Loop over all the CNN models saved in list_dir
 for (file in list_dir[5:length(list_dir)]) {
-
+    
+    # Get model identifier from the file name itself
     str.id = str_sub(file, 8, 10)
     val.idx = as.numeric(unlist(as.vector(log_list[str.id])))
 
+    # Generate labels
     labels <- data$tempo
     cat_labels <- keras::to_categorical(labels)
     cat_labels = cat_labels[, (min(labels)+1):ncol(cat_labels)]
     seq_ = seq(min(labels), max(labels))
     colnames(cat_labels) <- seq_
 
+    # Split data into validation and train, same split for all models to 
+    # evaluate on the same basis
     val.labels <- cat_labels[val.idx,]
     val.data <- data[val.idx,1:(40*171)]
 
     train.labels <- cat_labels[-val.idx,]
     train.data <- data[!val.idx,1:(40*171)]
 
-    print('Loading model...')
+    # Load model and predict on train and validation data
     new_model <- load_model_hdf5(file)
-    print('Predicting....')
     res.train = new_model %>% keras_predict(as.matrix(train.data))
     res.val = new_model %>% keras_predict(as.matrix(val.data))
 
-    #Train
-    print('Computing RMSE....')
+    # Estimate RMSE on training data
     tempo_predicted_train = apply(res.train,1,which.max)+62
     ground_truth_train = rep(NA, length(tempo_predicted_train))
     for (i in 1:length(ground_truth_train)) {
@@ -229,18 +233,17 @@ for (file in list_dir[5:length(list_dir)]) {
     }
     rmse.train <- sqrt(sum((tempo_predicted_train-ground_truth_train)^2) / length(tempo_predicted_train))
 
-    #Val 
+    # Estimate RMSE on validation data
     tempo_predicted_test = apply(res.val,1,which.max)+62
     ground_truth_test = rep(NA, length(tempo_predicted_test))
     for (i in 1:length(ground_truth_test)) {
         ground_truth_test[i] = match(c(1), val.labels[i, ])+62
     }
-    rmse.val <- sqrt(sum((tempo_predicted_test-ground_truth_test)^2) / length(tempo_predicted_test))
-    print(file)
-    print(paste0('Train RMSE: ', rmse.train))
-    print(paste0('Val RMSE: ', rmse.val))
-    cat(paste0(file, ",", rmse.train, ",", rmse.val, "\n"), file="results.csv",append=TRUE)
-    print('====================')
+    rmse.val <- sqrt(sum((tempo_predicted_test-ground_truth_test)^2) /length(tempo_predicted_test))
+
+    # Save RMSE values and file name into a csv file named results
+    cat(paste0(file, ",", rmse.train, ",", rmse.val, "\n"), 
+        file="results.csv", append=TRUE)
 }
 ```
 
@@ -329,7 +332,7 @@ apply_svd <- function(data, n_components, plot=T) {
 
 train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE, 
                            ntree=500, 
-                           mtry=length(colnames(df)+svd_components)/3) {
+                           mtry=(length(colnames(df))+svd_components)/3) {
 
   df.svd <- apply_svd(df, n_components=svd_components, plot=F)
  
@@ -362,7 +365,7 @@ train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE,
   rmse_val = rmse(model$test$predicted,
                     y.test)
 
-  return(list('model'=model, 'y.test'=y.test))
+  return(list('model'=model, 'y.test'=y.test, 'dat'=x))
 
 }
 
@@ -370,7 +373,7 @@ train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE,
 
 
 
-```{r SVD tuning, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
+```{r SVD tuning, eval=FALSE, echo=FALSE}
 
 simulations = 5
 components = 10
@@ -398,6 +401,11 @@ for (sim in 1:simulations) {
   }
 }
 
+
+```
+
+``` {r, run svd, fig.width=10, fig.height=8, fig.align='center'}
+
 cols <- sample(viridis::turbo(100), components)
 
 matplot(2:components, sim_matrix, type="l", lty=1, lwd=3, col=cols,
@@ -405,18 +413,21 @@ matplot(2:components, sim_matrix, type="l", lty=1, lwd=3, col=cols,
 legend("topright", legend=paste0("sim", 1:simulations), col=cols, lwd=3)
 
 ```
-As we can observe, the combination that generates the lowest RMSE is the case in which we reduce the 171 features into 2 components. We will also tune the randomForest parameters in a similar fashion, by picking those parameters that give the lowest RMSE on validation:
 
-```{r, grid search, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
+As we can observe, there is no predominant combination that generates the lowest RMSE, In this case, and in order to make the model more simple, we reduce the 171 features into 2 components. 
+
+Next we will tune the randomForest parameters in a similar fashion, by picking those parameters that give the lowest RMSE on validation:
+
+```{r, grid search, eval=FALSE, echo=FALSE}
 
 p = 39
 simulations = 5
 ntree_grid = c(100, 300, 500, 700, 900)
 mtry_grid = c(p/7, p/5, p/3, p/2, p-2)
-sim_matrix = matrix(NA, nrow=nrow(expand.grid(ntree_grid, mtry_grid)), 
+sim_matrix_grid = matrix(NA, nrow=nrow(expand.grid(ntree_grid, mtry_grid)), 
                     ncol=simulations)
-sim_matrix = cbind(expand.grid(ntree_grid, mtry_grid), sim_matrix)
-names(sim_matrix) <- c('ntree', 'mtry', 's1', 's2')
+sim_matrix_grid = cbind(expand.grid(ntree_grid, mtry_grid), sim_matrix_grid)
+names(sim_matrix_grid) <- c('ntree', 'mtry', 's1', 's2', 's3', 's4', 's5')
 
 
 for (sim in 1:simulations) {
@@ -442,21 +453,28 @@ for (sim in 1:simulations) {
     print(paste0('RMSE value for basic Random Forest is: ',
                  rmse_val))
 
-    sim_matrix[i, sim+2] = rmse_val
+    sim_matrix_grid[i, sim+2] = rmse_val
   }
 }
 
-mean = rowMeans(sim_matrix[,3:ncol(sim_matrix)])
-sim_matrix = cbind(sim_matrix, mean)
-sim_matrix
+mean = rowMeans(sim_matrix_grid[,3:ncol(sim_matrix_grid)])
+sim_matrix_grid = cbind(sim_matrix_grid, mean)
+sim_matrix_grid
+
+```
+
+``` {r, run grid}
+
+sim_matrix_grid
+
 ```
 
 From this grid search we can obtain the best parametrization of the Random Forest, which will be the model used to do predictions on the test data.
 
 
 ```{r Predictions, include=FALSE}
-best_mtry = as.numeric(sim_matrix[which.max(sim_matrix$mean),]['mtry'])
-best_ntree = as.numeric(sim_matrix[which.max(sim_matrix$mean),]['ntree'])
+best_mtry = as.numeric(sim_matrix_grid[which.max(sim_matrix_grid$mean),]['mtry'])
+best_ntree = as.numeric(sim_matrix_grid[which.max(sim_matrix_grid$mean),]['ntree'])
 
 rf_model_final = train_rf_model(df.train,
                                 svd_components = 2,
@@ -477,7 +495,7 @@ tempo.predict <- predict(rf_model_final$model, df.test.svd)
 df.test = as.data.frame(df.test)
 
 df.test['Tempo Prediction'] <- tempo.predict
-write.csv(df.test, 'final_prediction_test.csv')
+#write.csv(df.test, 'final_prediction_test.csv')
 ```
 
 
@@ -492,7 +510,8 @@ The implementation of this algorithm can be subdivided into five steps, the firs
 
 ```{r}
 
-x = as.vector(df.tr %>% dplyr::select(-c('tempo', 'id')))
+x = rf_model_final$dat
+y = as.vector(df.train$tempo)
 n = nrow(x)/2
 n_obs = n*2 # size of D1
 ind <- sample(1:n_obs, n, replace=F)
@@ -510,9 +529,10 @@ Secondly, we use D1 dataset to train the random forest model and then in the thi
 
 ```{r}
 
-model = randomForest(x = D1, y = D1_y, xtest = D2)
+model = randomForest(x = D1, y = D1_y, xtest = D2, mtry=best_mtry,
+                     ntree=best_ntree)
 
-y_D2_pred = model$predicted
+y_D2_pred = model$test$predicted
 R = abs(D2_y - y_D2_pred)
 
 ```
@@ -593,8 +613,12 @@ legend("topright",legend=c('Wrong CI Predictions'),col=c("red"),pch=4)
 
 Now that we have a model and the value of $d$ needed for the split conformal prediction for regression algorithm, we can apply it to the actual testing set to make our predictions. Of course, for this set the real values are not provided, but we can train the model on the D1 set as we did before and compute the confidence intervals using the $d$ value found in the step before.
 
-```{r}
-predictions = randomForest(x = D1, y = D1_y, xtest = x.test)$predicted
+```{r, predictions part B}
+
+predictions = randomForest(x = D1, y = D1_y, xtest = df.test.svd,
+                           mtry=best_mtry,
+                           ntree=best_ntree)$predicted
+colnames(df.test.svd)
 ```
 
 ### 3.
@@ -615,22 +639,16 @@ Given the results in the training stage we expect these predictions to have an a
 
 
 
-
-
-
-
-
-
 # C) Variable Importance
 
 In this last section the LOCO (leave-one-covariate-out) inference will be applied on our model to infer quantitavely the impact that the top 5 variables of our model have on our final model. In our particular case, since we are using a Random Forest as our final model, it is easy to obtain the top 5 most important variables. These variables are:
 
 \begin{enumerate}
-\item CNN_Prediction_3
-\item genre 
-\item CNN_Prediction_Prob_3
-\item freq.M 
-\item mode
+  \item CNN\_Prediction\_3
+  \item genre 
+  \item CNN\_Prediction\_Prob\_3
+  \item freq.M 
+  \item mode
 \end{enumerate}
 
 This variables are the variables we which hoped the model would consider the most relevant as well, in particular the top 3. CNN_Prediction_3 gives a good approximation of the target variable while genre and CNN_Prediction_Prob_3 try to correct in cases in which CNN_Prediction_3 returns an incorrect result.
@@ -679,7 +697,7 @@ split_xy <- function(data, proportion, indexes=NULL) {
 
 
 
-``` {r, RandomForest Variables Importance regression}
+``` {r, RandomForest Variables Importance regression, eval=FALSE}
 
 #== 1. Split the data into 2 parts --> Dn1 and Dn2
 
@@ -737,7 +755,7 @@ y.Dn2.pred <- predict(fn1, Dn2$x)
 
 
 # Setup the non-parameteric bootstrap procedure
-B = 10 # number of simulations
+B = 1000 # number of simulations
 
 median.boot <- as.data.frame(matrix(NA, nrow=B, ncol=length(top_var))) 
 colnames(median.boot) <- top_var 
@@ -783,8 +801,10 @@ for(var in top_var) {
   }
 }
 
+```
 
 
+``` {r, Conf Function}
 #== 6. Compute the confidence intervals
 
 conf.int <- function(median.boot, median.true, alpha, n_correction) {
