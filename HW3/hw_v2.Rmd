@@ -60,6 +60,8 @@ library(kerasR)
 
 Explain how we are going to handle the exercise and our first thoughts regarding the data, the mel-spectrum and the stuff we talked about on last monday. 
 
+
+
 ``` {r Loading Data, include=FALSE}
 
 df.train <- fread('data/train4final_hw.csv')
@@ -69,14 +71,26 @@ df.test <- fread('data/test4final_hw.csv')
 
 TODO: comment plot and strategy 
 
-![Pipeline.](pipeline_final_hw_sl.png "Pipeline")
+![Pipeline.](assets/pipeline_final_hw_sl.png "Pipeline")
 
 
-### Build the CNN (Stefano)
+### Build the CNN
 
-Explain how the CNN works (more or less), cite the paper, explain why we are using it (output), mention Colab and technical aspects regarding the implementation (?).
+Following [Schreiber et al.](https://www.researchgate.net/publication/328028453_A_Single-Step_Approach_to_Musical_Tempo_Estimation_Using_a_Convolutional_Neural_Network) we implemented a Convolutional Neural Network to pre-process and synthesize the mel-spectrum associated to each audio sample. As mentioned before, the mel-spectrum gives us the information regarding the frequencies composing the audio signal at each time interval ($t_i \in \{1,...,171\}$); the underlying idea is apply to this spectrum the same techniques that usually apply to the image processing tasks, in order to extract progressively patterns from the frequencies and finally have as output the predicted tempo and the associated probability distribution. 
 
-TODO: include diagram
+In doing so, the data samples flow across many different convolutional layers having different dimensional filters up until the output of the convolutions passes through the dense layers, which are in charge of produce the final prediction. 
+
+Our architecture slightly differs from the one in the reference in the dimension of the input and hence in the dimension of the filters: the mel-spectrum is given us into a flatten form, having the columns of the original matrix chained in a unidimensional vector; for this reason, the number of input nodes reflects the number of mel-features ($40 \times 171$) and all the convolutional filters, which are unidimensional also in the reference paper, are applied only along one axis.
+
+We implemented the CNN by means of the API of the libraries Keras and Tensorflow, relying on the pre-built layers. The model was trained in Google Colab, using the same settings reported in Schreiber et al.
+
+Althought the CNN gives us very good results and a low RMSE, it lacks in interpretability - due also to the great number of parameters - and needs more than 8 epochs (on average) to be trained well. Even if feasible to tackle, these challenges pushed us to decide to early stop the training - the elected model has been trained for 4 (?) epochs - and to make use of the CNN only for a data pre-processing step - synthesize the mel-frequencies spectrum -. Thus, the CNN's predictions were added to the data set as a replacement of the mel-spectrum, leading to a consistent dimensionality reduction.
+
+
+
+
+![CNN architecture.](assets/model.png "CNN architecture")
+
 
 ```{r Functions for CNN, include=FALSE, eval=FALSE}
 
@@ -174,10 +188,6 @@ build_network <- function() {
 ```
 
 
-TODO: put the code of the CNN (without executing it)
-we can now assume we have the new data set with the additional features
-
-TODO: include code to evaluate the CNN (without exec)
 
 ```{r Evaluate the CNN, eval=FALSE}
 
@@ -233,6 +243,7 @@ for (file in list_dir[5:length(list_dir)]) {
     print('====================')
 }
 ```
+
 
 
 ```{r Generate a new data set, eval=FALSE}
@@ -410,7 +421,6 @@ write.csv(df.test, 'final_prediction_test.csv')
 
 
 
-
 # B) Predicting with confidence
 
 ### 1.
@@ -421,6 +431,7 @@ The implementation of this algorithm can be subdivided into five steps, the firs
 
 ```{r}
 
+x = as.vector(df.tr %>% dplyr::select(-c('tempo', 'id')))
 n = nrow(x)/2
 n_obs = n*2 # size of D1
 ind <- sample(1:n_obs, n, replace=F)
