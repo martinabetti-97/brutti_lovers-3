@@ -272,19 +272,25 @@ CNN.test = generate_CNN_features(data.test, '/content/weights312-128.04-0.44.hdf
 
 ```
 
+In order to choose which of the CNN models to use and what epoch we have stored the RMSE results that these CNN's return on the validation and test data. Our aim is to use a model for which the RMSE on the validation data is lower than that of the training data (implying the model is not overfitting) and such that the CNN can still be improved by the next classification model. The following table shows the three candidate models to generate the feature variables.
 
-TODO: show part of the results in the .csv file "results.csv"
-
-Explain the new data set
-
-
-<!-- End of CNN -->
-
+\begin{table}[]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Model Name}} & \textbf{Train RMSE} & \textbf{Validation RMSE} \\ \hline
+weights312-128.01-0.63.hdf5 & 15.08 & 11.80 \\ \hline
+weights312-128.04-0.44.hdf5 & 9.41  & 7.97  \\ \hline
+weights312-128.07-0.23.hdf5 & 4.53  & 0.65  \\ \hline
+\end{tabular}
+\caption{Best CNN Models }
+\label{tab:my-table}
+\end{table}
 
 
 ### Feature Engineering
 
-Explain the steps (how and why)
+From the previous we have generated 2 features associated to the CNN model. However we still have multiple other features which need to be engineered before we can consider them in the final model. In particular we have 171 features that track the dominant frequency. We have considered that the best way to exploit these features was by reducing their dimensionality through SVD, seeking the optimal number of components (optimal is defined as that which returns the lowest RMSE on the validation data). The results of this analysis can be seen in the plot below.
 
 ```{r New data loading, include=FALSE}
 df.train <- as.data.frame(fread('data/train4final_hw_CNN.csv'))
@@ -321,7 +327,9 @@ apply_svd <- function(data, n_components, plot=T) {
 
 
 
-train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE) {
+train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE, 
+                           ntree=500, 
+                           mtry=length(colnames(df)+svd_components)/3) {
 
   df.svd <- apply_svd(df, n_components=svd_components, plot=F)
  
@@ -347,7 +355,9 @@ train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE) {
  
   model = randomForest(x = x, y = y,
                        xtest = x.test,
-                       keep.forest = keep.forest)
+                       keep.forest = keep.forest,
+                       mtry=mtry,
+                       ntree=ntree)
  
   rmse_val = rmse(model$test$predicted,
                     y.test)
@@ -362,8 +372,8 @@ train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE) {
 
 ```{r SVD tuning, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
 
-simulations = 2
-components = 5
+simulations = 5
+components = 10
 sim_matrix = matrix(NA, nrow=components-1, ncol=simulations)
 
 for (sim in 1:simulations) {
@@ -372,7 +382,7 @@ for (sim in 1:simulations) {
 
     for (i in 2:components) {
    
-    print(paste0('Number of features in SVD: ', i))
+    #print(paste0('Number of features in SVD: ', i))
    
     rf_model = train_rf_model(df.train,
                               svd_components = i,
@@ -381,8 +391,8 @@ for (sim in 1:simulations) {
     rmse_val = rmse(rf_model$model$test$predicted,
                     rf_model$y.test)
    
-    print(paste0('RMSE value for basic Random Forest is: ',
-                 rmse_val))
+    #print(paste0('RMSE value for basic Random Forest is: ',
+    #             rmse_val))
 
     sim_matrix[i-1, sim] = rmse_val
   }
@@ -395,14 +405,65 @@ matplot(2:components, sim_matrix, type="l", lty=1, lwd=3, col=cols,
 legend("topright", legend=paste0("sim", 1:simulations), col=cols, lwd=3)
 
 ```
+As we can observe, the combination that generates the lowest RMSE is the case in which we reduce the 171 features into 2 components. We will also tune the randomForest parameters in a similar fashion, by picking those parameters that give the lowest RMSE on validation:
 
+```{r, grid search, echo=FALSE, fig.width=10, fig.height=8, fig.align='center'}
+
+p = 39
+simulations = 5
+ntree_grid = c(100, 300, 500, 700, 900)
+mtry_grid = c(p/7, p/5, p/3, p/2, p-2)
+sim_matrix = matrix(NA, nrow=nrow(expand.grid(ntree_grid, mtry_grid)), 
+                    ncol=simulations)
+sim_matrix = cbind(expand.grid(ntree_grid, mtry_grid), sim_matrix)
+names(sim_matrix) <- c('ntree', 'mtry', 's1', 's2')
+
+
+for (sim in 1:simulations) {
+ 
+  ind <- sample(c(TRUE, FALSE), n, replace=TRUE, prob=c(0.7, 0.3))
+
+    for (i in 1:nrow(expand.grid(ntree_grid, mtry_grid))) {
+    mtry <- expand.grid(ntree_grid, mtry_grid)[i, 2]
+    ntree <- expand.grid(ntree_grid, mtry_grid)[i, 1]
+    
+    print(mtry)
+    print(ntree)
+   
+    rf_model = train_rf_model(df.train,
+                              svd_components = 2,
+                              train_idx = ind,
+                              mtry=mtry,
+                              ntree = ntree)
+     
+    rmse_val = rmse(rf_model$model$test$predicted,
+                    rf_model$y.test)
+   
+    print(paste0('RMSE value for basic Random Forest is: ',
+                 rmse_val))
+
+    sim_matrix[i, sim+2] = rmse_val
+  }
+}
+
+mean = rowMeans(sim_matrix[,3:ncol(sim_matrix)])
+sim_matrix = cbind(sim_matrix, mean)
+sim_matrix
+```
+
+From this grid search we can obtain the best parametrization of the Random Forest, which will be the model used to do predictions on the test data.
 
 
 ```{r Predictions, include=FALSE}
+best_mtry = as.numeric(sim_matrix[which.max(sim_matrix$mean),]['mtry'])
+best_ntree = as.numeric(sim_matrix[which.max(sim_matrix$mean),]['ntree'])
+
 rf_model_final = train_rf_model(df.train,
                                 svd_components = 2,
                                 train_idx = ind,
-                                keep.forest = TRUE)
+                                keep.forest = TRUE,
+                                mtry=best_mtry,
+                                ntree=best_ntree)
 
 df.test.red <- df.test %>% dplyr::select(-contains(c('mel')))
 df.test.svd <- apply_svd(df.test.red, n_components=2, plot=F)
