@@ -562,6 +562,32 @@ Given the results in the training stage we expect these predictions to have an a
 
 # C) Variable Importance
 
+In this last section the LOCO (leave-one-covariate-out) inference will be applied on our model to infer quantitavely the impact that the top 5 variables of our model have on our final model. In our particular case, since we are using a Random Forest as our final model, it is easy to obtain the top 5 most important variables. These variables are:
+
+\begin{enumerate}
+\item CNN_Prediction_3
+\item genre 
+\item CNN_Prediction_Prob_3
+\item freq.M 
+\item mode
+\end{enumerate}
+
+This variables are the variables we which hoped the model would consider the most relevant as well, in particular the top 3. CNN_Prediction_3 gives a good approximation of the target variable while genre and CNN_Prediction_Prob_3 try to correct in cases in which CNN_Prediction_3 returns an incorrect result.
+
+The following steps have been followed for the LOCO inference, each of which can be illustrated in the code following this description:
+
+\begin{enumerate}
+\item \textbf{Split Data:} We will split the data in two. $D_{n_1}$ will consist of 70\% of the data, while $D_{n_2}$ will be composed by the other observations not included in $D_{n_1}$.
+\item \textbf{Apply model on $D_{n_1}$:} We will run our random forest on the first data set. This model will generate our estimate $\hat{f}_{n_1}(\cdot)$. We can consider this as the base estimate and we will see what impact removing variables from the model will have on this estimate.
+\item \textbf{Remove one feature:} Next step is to recompute the previous estimate but in this case we will remove one of the top 5 features, leading to the estimate defined as $\hat{f}_{n_1}^{-j}(\cdot)$. We will generate 5 of these estimates, removing one feature every time.
+\item \textbf{Compute the error prediction:} Given the previously mentioned ingredients the next step is to calculate the prediction error by the equation:
+
+\begin{equation}
+|Y-\hat{f}_{n_1}^{-j}(X)|-|Y-\hat{f}_{n_1}(X)|
+\end{equation}
+
+which we will summarize using the median. This quantity is random since it depends on the dataset $D_{n_1}$, therefore in order to get a better representation we will use a non-parametric bootstrap to obtain its confidence interval. Bonferroni will be used to adjust for multiplicity ($\alpha/5$).
+\end{enumerate}
 
 
 
@@ -596,11 +622,16 @@ split_xy <- function(data, proportion, indexes=NULL) {
 
 #== 1. Split the data into 2 parts --> Dn1 and Dn2
 
+df.train <- apply_svd(df.train, n_components=2, plot=F)
+
 Dn <- select_features(df.train, features=c('domfr', 'mel', 
                                            'CNN_Prediction_1',
                                            'CNN_Prediction_2',
                                            'CNN_Prediction_Prob_1',
-                                           'CNN_Prediction_Prob_2'), set.difference = T)
+                                           'CNN_Prediction_Prob_2'),
+                      set.difference = T)
+
+
 
 # Split the data set into Dn1 and Dn2
 Dn1 <- split_xy(Dn, proportion=0.7)
@@ -608,7 +639,6 @@ Dn2 <- split_xy(Dn, indexes=-Dn1$idx)
 
 
 #== 2. Run any algorithm on Dn1 using all the feature variables used in the champion model --> fn1
-
 
 # Train the model on Dn1
 fn1 <- randomForest(x = Dn1$x, y = Dn1$y)
@@ -632,7 +662,8 @@ names(model.list) <- top_var
 
 # Run the model leaving the variable "var" out
 for (var in top_var) {
-  model.list[[var]] <- randomForest(x = select_features(Dn1$x, features=c(var), set.difference=T), 
+  model.list[[var]] <- randomForest(x = select_features(Dn1$x, features=c(var), 
+                                                        set.difference=T), 
                                     y = Dn1$y)
 }
 
@@ -677,7 +708,7 @@ for(var in top_var) {
     idx.Dn2.boot <- sample(1:n2, size=n2, replace=T)
     
     # Get the bootstrap sample
-    x.Dn2.minus.j.boot <- x.Dn2.minus.j[id,]
+    x.Dn2.minus.j.boot <- x.Dn2.minus.j[idx.Dn2.boot,]
     y.Dn2.boot <- Dn2$y[idx.Dn2.boot]
     
     # Predict on the bootstrap sample with and without the variable "var"
@@ -698,7 +729,7 @@ for(var in top_var) {
 conf.int <- function(median.boot, median.true, alpha, n_correction) {
 
   alpha <- alpha / n_correction
-  se.boot <- apply(median.store, 2, sd) 
+  se.boot <- apply(median.boot, 2, sd) 
   CI.boot.vec.lower <- median.true - qnorm(1-alpha/2)*se.boot 
   CI.boot.vec.upper <- median.true + qnorm(1-alpha/2)*se.boot 
   CI.boot.list <- list(lower=CI.boot.vec.lower, upper=CI.boot.vec.upper)
@@ -707,9 +738,18 @@ conf.int <- function(median.boot, median.true, alpha, n_correction) {
 
 ```
 
+The next plots will allow us to visualize the most relevant findings of LOCO:
 
+```{r Importance, fig.width=10, fig.height=8, fig.align='center', echo=FALSE}
 
-```{r Plots for part C, fig.width=10, fig.height=8, fig.align='center', echo=FALSE}
+varImpPlot(fn1, cex = 0.9, col='black',
+           pch = 16, main='Variable Importance of RF', n.var = 20)
+```
+As we had already anticipated at the beginning of the section, the most relevant feature by far is CNN_Prediction_3, which is the prediction generated by our CNN model.The following plots will quantify this importance more accurately and in a more intuitive manner.
+
+The following plot gives us the distribution (generated from the bootstrap) of the absolute error when removing one of the feature variables. It can be seen that the variable for which this error can aquire largest values is the most important variable, i.e. CNN_Prediction_3 (we could reach a maximum of 80 in absolute error).
+
+```{r Error Distribution, fig.width=10, fig.height=8, fig.align='center', echo=FALSE}
 
 # Some plots
 
@@ -724,26 +764,30 @@ for (var in top_var) {
        xlab = 'Absolute error')
  
 }
+```
+We will also plot the distribution of the median of the prediction error. We can observe that the average value of this median is very close to the true median value (LLN). It can also be appreciated that the distribution of this median is Gaussian, which justifies the choice made to compute the confidence intervals for this quantity.
 
-
+```{r Median dist, fig.width=10, fig.height=8, fig.align='center', echo=FALSE}
 # Another plot to show that the median Bootstrap returns has an approximate
 # gaussian shape, which justifies the choice of our confidence interval bands
 for (var in top_var) {
  
-  hist(median.store[,var], breaks = 10, col='orchid',
+  hist(median.boot[,var], breaks = 10, col='orchid',
        main=paste0('Median Bootstrap distribution of ', var),
        probability = TRUE,
        xlab = 'Median')
  
 }
+```
 
-varImpPlot(fn1, cex = 0.9, col='black',
-           pch = 16, main='Variable Importance of RF', n.var = 20)
+Finally, another representation of how much more impact the feature CNN_Prediction_3 has over the other variables is the following plot, in which we have also included the confidence interval around the true median value.
 
+
+```{r Conf, fig.width=10, fig.height=8, fig.align='center', echo=FALSE}
 # Plot to show the confidence interval around the
 library(ggplot2)
 
-confidence.intervals <- conf.int(median.store, median.true, alpha=0.05, n_correction=5)
+confidence.intervals <- conf.int(median.boot, median.true, alpha=0.05, n_correction=5)
 
 df.plot = as.data.frame(cbind(median.true, confidence.intervals$lower, confidence.intervals$upper))
 colnames(df.plot) <- c('MedianError', 'Lower', 'Upper')
@@ -761,4 +805,6 @@ f + geom_pointrange(size=.75, col='red', pch=16) +
   geom_hline(yintercept=0)
 
 ```
+
+In conclusion, we can say that the variable that has most impact on the prediction error is CNN_Prediction_3, which is in line with our initial expectation. The random forest is able to identify that this variable already acts as a very good predictor and simply tries to correct it (mainly using the other top 4 feature variables).
 

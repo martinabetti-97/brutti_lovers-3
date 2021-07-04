@@ -49,4 +49,5 @@ vignettes/*.pdf
 Final_Project/.ipynb_checkpoints
 .vscode
 
-HW3
+#HW3
+/HW3/data
