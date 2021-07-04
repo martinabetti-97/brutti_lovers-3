@@ -365,7 +365,7 @@ train_rf_model <- function(df, svd_components, train_idx, keep.forest=FALSE,
   rmse_val = rmse(model$test$predicted,
                     y.test)
 
-  return(list('model'=model, 'y.test'=y.test, 'dat'=x))
+  return(list('model'=model, 'y.test'=y.test, 'dat'=x, 'y'=y))
 
 }
 
@@ -511,7 +511,7 @@ The implementation of this algorithm can be subdivided into five steps, the firs
 ```{r}
 
 x = rf_model_final$dat
-y = as.vector(df.train$tempo)
+y = rf_model_final$y
 n = nrow(x)/2
 n_obs = n*2 # size of D1
 ind <- sample(1:n_obs, n, replace=F)

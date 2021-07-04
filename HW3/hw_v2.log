@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.10) (preloaded format=pdflatex 2020.10.22)  4 JUL 2021 19:57
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.10) (preloaded format=pdflatex 2020.10.22)  4 JUL 2021 20:07
 entering extended mode
 **./hw_v2.tex
 (hw_v2.tex
@@ -708,35 +708,35 @@ line 336.
 File: hw_v2_files/figure-latex/unnamed-chunk-3-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/unnamed-chunk-3-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/unnamed-chunk-3-1.pdf  used o
-n input line 438.
+n input line 433.
 (pdftex.def)             Requested size: 528.93402pt x 238.02031pt.
 [7] [8 <./hw_v2_files/figure-latex/unnamed-chunk-3-1.pdf>]
 <hw_v2_files/figure-latex/unnamed-chunk-6-1.pdf, id=82, 469.755pt x 325.215pt>
 File: hw_v2_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/unnamed-chunk-6-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/unnamed-chunk-6-1.pdf  used o
-n input line 513.
+n input line 498.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 <hw_v2_files/figure-latex/unnamed-chunk-7-1.pdf, id=83, 1084.05pt x 578.16pt>
 File: hw_v2_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/unnamed-chunk-7-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/unnamed-chunk-7-1.pdf  used o
-n input line 524.
+n input line 509.
 (pdftex.def)             Requested size: 528.95609pt x 282.10991pt.
 [9 <./hw_v2_files/figure-latex/unnamed-chunk-6-1.pdf>]
 <hw_v2_files/figure-latex/unnamed-chunk-8-1.pdf, id=95, 722.7pt x 433.62pt>
 File: hw_v2_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/unnamed-chunk-8-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/unnamed-chunk-8-1.pdf  used o
-n input line 564.
+n input line 549.
 (pdftex.def)             Requested size: 528.93402pt x 317.36041pt.
 [10 <./hw_v2_files/figure-latex/unnamed-chunk-7-1.pdf>] [11 <./hw_v2_files/figu
 re-latex/unnamed-chunk-8-1.pdf>] [12]
-Underfull \vbox (badness 10000) detected at line 712
+Underfull \vbox (badness 10000) detected at line 697
  []
 
 
-Underfull \vbox (badness 10000) detected at line 712
+Underfull \vbox (badness 10000) detected at line 697
  []
 
 [13]
@@ -744,7 +744,7 @@ Underfull \vbox (badness 10000) detected at line 712
 File: hw_v2_files/figure-latex/Importance-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Importance-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Importance-1.pdf  used on inp
-ut line 733.
+ut line 718.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [14]
 <hw_v2_files/figure-latex/Error Distribution-1.pdf, id=148, 722.7pt x 578.16pt>
@@ -753,7 +753,7 @@ File: hw_v2_files/figure-latex/Error Distribution-1.pdf Graphic file (type pdf)
 
 <use hw_v2_files/figure-latex/Error Distribution-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Error Distribution-1.pdf  use
-d on input line 751.
+d on input line 736.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [15 <./hw_v2_files/figure-latex/Importance-1.pdf>]
 <hw_v2_files/figure-latex/Error Distribution-2.pdf, id=159, 722.7pt x 578.16pt>
@@ -762,7 +762,7 @@ File: hw_v2_files/figure-latex/Error Distribution-2.pdf Graphic file (type pdf)
 
 <use hw_v2_files/figure-latex/Error Distribution-2.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Error Distribution-2.pdf  use
-d on input line 753.
+d on input line 738.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [16 <./hw_v2_files/figure-latex/Error Distribution-1.pdf>]
 <hw_v2_files/figure-latex/Error Distribution-3.pdf, id=170, 722.7pt x 578.16pt>
@@ -771,7 +771,7 @@ File: hw_v2_files/figure-latex/Error Distribution-3.pdf Graphic file (type pdf)
 
 <use hw_v2_files/figure-latex/Error Distribution-3.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Error Distribution-3.pdf  use
-d on input line 755.
+d on input line 740.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [17 <./hw_v2_files/figure-latex/Error Distribution-2.pdf>]
 <hw_v2_files/figure-latex/Error Distribution-4.pdf, id=181, 722.7pt x 578.16pt>
@@ -780,7 +780,7 @@ File: hw_v2_files/figure-latex/Error Distribution-4.pdf Graphic file (type pdf)
 
 <use hw_v2_files/figure-latex/Error Distribution-4.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Error Distribution-4.pdf  use
-d on input line 757.
+d on input line 742.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [18 <./hw_v2_files/figure-latex/Error Distribution-3.pdf>]
 <hw_v2_files/figure-latex/Error Distribution-5.pdf, id=192, 722.7pt x 578.16pt>
@@ -789,49 +789,49 @@ File: hw_v2_files/figure-latex/Error Distribution-5.pdf Graphic file (type pdf)
 
 <use hw_v2_files/figure-latex/Error Distribution-5.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Error Distribution-5.pdf  use
-d on input line 759.
+d on input line 744.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [19 <./hw_v2_files/figure-latex/Error Distribution-4.pdf>]
 <hw_v2_files/figure-latex/Median dist-1.pdf, id=204, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Median dist-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Median dist-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Median dist-1.pdf  used on in
-put line 767.
+put line 752.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [20 <./hw_v2_files/figure-latex/Error Distribution-5.pdf>]
 <hw_v2_files/figure-latex/Median dist-2.pdf, id=215, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Median dist-2.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Median dist-2.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Median dist-2.pdf  used on in
-put line 769.
+put line 754.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [21 <./hw_v2_files/figure-latex/Median dist-1.pdf>]
 <hw_v2_files/figure-latex/Median dist-3.pdf, id=226, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Median dist-3.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Median dist-3.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Median dist-3.pdf  used on in
-put line 771.
+put line 756.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [22 <./hw_v2_files/figure-latex/Median dist-2.pdf>]
 <hw_v2_files/figure-latex/Median dist-4.pdf, id=237, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Median dist-4.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Median dist-4.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Median dist-4.pdf  used on in
-put line 773.
+put line 758.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [23 <./hw_v2_files/figure-latex/Median dist-3.pdf>]
 <hw_v2_files/figure-latex/Median dist-5.pdf, id=248, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Median dist-5.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Median dist-5.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Median dist-5.pdf  used on in
-put line 775.
+put line 760.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [24 <./hw_v2_files/figure-latex/Median dist-4.pdf>]
 <hw_v2_files/figure-latex/Conf-1.pdf, id=259, 722.7pt x 578.16pt>
 File: hw_v2_files/figure-latex/Conf-1.pdf Graphic file (type pdf)
 <use hw_v2_files/figure-latex/Conf-1.pdf>
 Package pdftex.def Info: hw_v2_files/figure-latex/Conf-1.pdf  used on input lin
-e 782.
+e 767.
 (pdftex.def)             Requested size: 528.93402pt x 423.14722pt.
 [25 <./hw_v2_files/figure-latex/Median dist-5.pdf>] [26 <./hw_v2_files/figure-l
 atex/Conf-1.pdf>] (hw_v2.aux) ) 
@@ -862,7 +862,7 @@ lm/lmsy8.pfb><C:/Users/juanm/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
 m/lmtk10.pfb><C:/Users/juanm/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
 m/lmtt10.pfb><C:/Users/juanm/AppData/Local/Programs/MiKTeX/fonts/type1/public/l
 m/lmtti10.pfb>
-Output written on hw_v2.pdf (26 pages, 710675 bytes).
+Output written on hw_v2.pdf (26 pages, 677536 bytes).
 PDF statistics:
  370 PDF objects out of 1000 (max. 8388607)
  60 named destinations out of 1000 (max. 500000)
