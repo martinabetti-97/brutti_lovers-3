@@ -38,6 +38,11 @@ header-includes:
 - \newcommand{\efun}{\end{array}\right.}
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+
 ``` {r, Load Libraries, include=FALSE}
 library(dplyr) 
 library(caret)
@@ -56,10 +61,7 @@ library(stringr)
 
 # A) Data and Goal
 
-### Data Loading/Pre-processing
-
-Explain how we are going to handle the exercise and our first thoughts regarding the data, the mel-spectrum and the stuff we talked about on last monday. 
-
+### Data loading and exploratory data analysis
 
 
 ``` {r Loading Data, include=FALSE}
@@ -67,20 +69,67 @@ Explain how we are going to handle the exercise and our first thoughts regarding
 df.train <- fread('data/train4final_hw.csv')
 df.test <- fread('data/test4final_hw.csv')
 
-load('HW3.RData')
+#load('HW3.RData')
 #save.image(file='HW3.RData')
 
 
 ```
 
-TODO: comment plot and strategy 
-
-![Pipeline.](pipeline_final_hw_sl.png "Pipeline")
 
 
-### Build the CNN
+The data set we are going to work on contains the output of a pre-processing stage of 8 seconds long song-snippets, for which estimate the right tempo. The features associated to them are mainly related to the mel-frequency cepstral coefficients, which provide information regarding the spectrum of the original audio track. The figure below shows the mel-frequency coefficients heat-map referred to the train samples with maximum (left) and minimum (right) tempo.
 
-Following [Schreiber et al.](https://www.researchgate.net/publication/328028453_A_Single-Step_Approach_to_Musical_Tempo_Estimation_Using_a_Convolutional_Neural_Network) we implemented a Convolutional Neural Network to pre-process and synthesize the mel-spectrum associated to each audio sample. As mentioned before, the mel-spectrum gives us the information regarding the frequencies composing the audio signal at each time interval ($t_i \in \{1,...,171\}$); the underlying idea is apply to this spectrum the same techniques that usually apply to the image processing tasks, in order to extract progressively patterns from the frequencies and finally have as output the predicted tempo and the associated probability distribution. 
+
+```{r Mel-frequency cepstrum as image, echo=FALSE, fig.width=12, fig.height=5}
+par(mfrow=c(1,2))
+mel.spectrum <- t(matrix(as.matrix(df.train[422,1:(171*40)]), ncol=171))
+image(mel.spectrum, col=hcl.colors(201, palette="viridis"),  xlab="Time intervals", ylab="Mel-bands", 
+      main="Mel-frequency cepstrum max tempo", xaxt="n", yaxt="n")
+mel.spectrum <- t(matrix(as.matrix(df.train[579,1:(171*40)]), ncol=171))
+image(mel.spectrum, col=hcl.colors(201, palette="viridis"),  xlab="Time intervals", ylab="Mel-bands", 
+      main="Mel-frequency cepstrum min tempo", xaxt="n", yaxt="n")
+```
+
+
+Since for each sample the mel-frequency coefficients are 6840, the challenge we are going to face out is how to extract information from the cepstrum and summarize the coefficients, in order to reduce the dimensionality of the feature space, as described in the next section.
+
+
+Another subset of features is related to the dominant frequency, i.e. the frequency of highest amplitude, over the 171 time intervals. An example of their distribution is depicted in the next plot.
+
+```{r Dominant frequencies, echo=FALSE, fig.width=10, fig.height=6}
+dominant.freq <- df.train[422,] %>% select(contains("dom"))
+
+plot(1:171, dominant.freq, type="h", col=viridis::viridis(171), lwd=1.8,
+     main="Dominant frequencies for the sample with maximum tempo",
+     xlab="Time intervals", ylab="Frequency")
+```
+
+The third subset of features is made of some statistical summaries and derived features from the short-time Fourier transform, the frequency spectrum and the audio signal.
+
+
+As already anticipated, the target variable is the tempo of the song-snippets, i.e. the rate of the musical pulses. There are 201 unique tempo values, whose distribution in depicted in the following histogram:
+
+```{r Tempo distribution train set, fig.width=10, fig.height=6, echo=FALSE}
+hist(df.train$tempo, prob=T, border="white", col=viridis::turbo(20), breaks=20,
+     main="Tempo distribution train set", xlab="Tempo", ylab="")
+```
+It can be seen that the data set is heavily unbalanced, having the majority of the observations' tempo belonging to a narrow neighbourhood of 140 bpm. This will be taken into account in the upcoming analysis. 
+
+Even though the tempo variable is defined in $\mathbb{R}^+$, it is convenient to restrict its domain to $\mathbb{N}$, so that treating the task as a classification problem over the number of unique observed tempo values (201 classes). 
+
+
+Finally, before moving to the next section, a brief and schematic pipeline is shown in the schema below: 
+
+\begin{figure}[ht!]
+  \includegraphics[width=0.7\textwidth]{assets/pipeline_final_hw_sl.jpg}
+  \caption{Pipeline.}
+\end{figure}
+
+
+
+### Data pre-processing and Convolutional Neural Network
+
+Following [Schreiber et al.](https://www.researchgate.net/publication/328028453_A_Single-Step_Approach_to_Musical_Tempo_Estimation_Using_a_Convolutional_Neural_Network) we implemented a Convolutional Neural Network to pre-process and synthesize the mel-spectrum associated to each audio sample. As mentioned before, the mel-frequency cepstrum gives us the information regarding the frequencies composing the audio signal at each time interval ($t_i \in \{1,...,171\}$); the underlying idea is apply to this spectrum the same techniques that usually apply to the image processing tasks, in order to extract progressively patterns from the frequencies and finally have as output the predicted tempo and the associated probability distribution. 
 
 In doing so, the data samples flow across many different convolutional layers having different dimensional filters up until the output of the convolutions passes through the dense layers, which are in charge of produce the final prediction. 
 
@@ -88,12 +137,15 @@ Our architecture slightly differs from the one in the reference in the dimension
 
 We implemented the CNN by means of the API of the libraries Keras and Tensorflow, relying on the pre-built layers. The model was trained in Google Colab, using the same settings reported in Schreiber et al.
 
-Althought the CNN gives us very good results and a low RMSE, it lacks in interpretability - due also to the great number of parameters - and needs more than 8 epochs (on average) to be trained well. Even if feasible to tackle, these challenges pushed us to decide to early stop the training - the elected model has been trained for 4 (?) epochs - and to make use of the CNN only for a data pre-processing step - synthesize the mel-frequencies spectrum -. Thus, the CNN's predictions were added to the data set as a replacement of the mel-spectrum, leading to a consistent dimensionality reduction.
+Although the CNN gives us very good results and a low RMSE, it lacks in interpretability - due also to the great number of parameters - and needs more than 8 epochs (on average) to be trained well. Even if feasible to tackle, these challenges pushed us to decide to early stop the training - the elected model has been trained for 4 (?) epochs - and to make use of the CNN only for a data pre-processing step - synthesize the mel-frequencies cepstrum -. Thus, the CNN's predictions were added to the data set as a replacement of the mel-cepstrum, leading to a consistent dimensionality reduction.
 
 
 
+\begin{figure}[ht!]
+  \includegraphics[width=0.7\textwidth]{assets/model.png}
+  \caption{Pipeline.}
+\end{figure}
 
-![CNN architecture.](model.png "CNN architecture")
 
 
 ```{r Functions for CNN, include=FALSE, eval=FALSE}
@@ -277,7 +329,7 @@ CNN.test = generate_CNN_features(data.test, '/content/weights312-128.04-0.44.hdf
 
 In order to choose which of the CNN models to use and what epoch we have stored the RMSE results that these CNN's return on the validation and test data. Our aim is to use a model for which the RMSE on the validation data is lower than that of the training data (implying the model is not overfitting) and such that the CNN can still be improved by the next classification model. The following table shows the three candidate models to generate the feature variables.
 
-\begin{table}[]
+\begin{table}[!ht]
 \centering
 \begin{tabular}{|l|c|c|}
 \hline
@@ -289,6 +341,7 @@ weights312-128.07-0.23.hdf5 & 4.53  & 0.65  \\ \hline
 \caption{Best CNN Models }
 \label{tab:my-table}
 \end{table}
+
 
 
 ### Feature Engineering
@@ -472,6 +525,7 @@ sim_matrix_grid
 From this grid search we can obtain the best parametrization of the Random Forest, which will be the model used to do predictions on the test data.
 
 
+
 ```{r Predictions, include=FALSE}
 best_mtry = as.numeric(sim_matrix_grid[which.max(sim_matrix_grid$mean),]['mtry'])
 best_ntree = as.numeric(sim_matrix_grid[which.max(sim_matrix_grid$mean),]['ntree'])
@@ -497,6 +551,7 @@ df.test = as.data.frame(df.test)
 df.test['Tempo Prediction'] <- tempo.predict
 #write.csv(df.test, 'final_prediction_test.csv')
 ```
+
 
 
 
