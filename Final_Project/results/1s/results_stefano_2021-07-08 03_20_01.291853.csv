@@ -1,0 +1,4 @@
+,Estimator,Best_params,Train_score,Test_score
+0,RandomForestClassifier,"{'class_weight': 'balanced', 'criterion': 'entropy', 'max_depth': 30, 'n_estimators': 500, 'n_jobs': -1}",0.8456939092593027,0.8365855683799718
+1,GaussianNB,{},0.649964,0.680893
+2,SVC,"{'C': 10, 'class_weight': 'balanced', 'kernel': 'linear', 'random_state': 42}",0.821814987962148,0.7937391015527693

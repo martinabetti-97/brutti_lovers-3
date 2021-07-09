@@ -1,0 +1,3 @@
+,Estimator,Best_params,Train_score,Test_score
+0,RandomForestClassifier,"{'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 10, 'n_estimators': 150, 'n_jobs': -1, 'random_state': 42}",0.7190745986779982,0.7172717271727173
+1,GaussianNB,{},0.37346553352219075,0.4213421342134213

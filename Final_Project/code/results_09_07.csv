@@ -1,0 +1,19 @@
+,df,Reduced,Estimator,Best_params,Train_score,Test_score,Test_F1
+0,1,Reduced_features,RidgeClassifier,"{'alpha': 100, 'class_weight': 'balanced'}",0.5481743227326266,0.5384615384615384,0.5810952118092622
+1,1,Reduced_features,XGBClassifier,"{'learning_rate': 0.2, 'max_depth': 9, 'min_child_weight': 1, 'n_jobs': -1}",0.783510011778563,0.7928571428571428,0.7865758666609387
+2,1,Reduced_features,LogisticRegression,"{'C': 0.01, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l2', 'solver': 'saga'}",0.7107184923439341,0.7137362637362638,0.7041702361421888
+3,1,Complete_features,RidgeClassifier,"{'alpha': 5, 'class_weight': 'balanced'}",0.6442873969375736,0.6357142857142857,0.6753509531022374
+4,1,Complete_features,XGBClassifier,"{'learning_rate': 0.5, 'max_depth': 9, 'min_child_weight': 1, 'n_jobs': -1}",0.8,0.8016483516483517,0.7951581017633246
+5,1,Complete_features,LogisticRegression,"{'C': 0.5, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l1', 'solver': 'saga'}",0.7660777385159011,0.7538461538461538,0.7468061626051216
+6,2,Reduced_features,RidgeClassifier,"{'alpha': 0.0001, 'class_weight': 'balanced'}",0.3942992874109264,0.416389811738649,0.455177888668334
+7,2,Reduced_features,XGBClassifier,"{'learning_rate': 0.1, 'max_depth': 9, 'min_child_weight': 1, 'n_jobs': -1}",0.6603325415676959,0.6411960132890365,0.6180424824734422
+8,2,Reduced_features,LogisticRegression,"{'C': 0.5, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l1', 'solver': 'saga'}",0.6641330166270784,0.6445182724252492,0.6197735131953782
+9,2,Complete_features,RidgeClassifier,"{'alpha': 50, 'class_weight': 'balanced'}",0.4992874109263658,0.5049833887043189,0.5441213450565323
+10,2,Complete_features,XGBClassifier,"{'learning_rate': 0.2, 'max_depth': 9, 'min_child_weight': 1, 'n_jobs': -1}",0.6959619952494063,0.6799557032115172,0.656058126954644
+11,2,Complete_features,LogisticRegression,"{'C': 0.01, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l2', 'solver': 'saga'}",0.6855106888361044,0.6677740863787376,0.6419293409880886
+12,5,Reduced_features,RidgeClassifier,"{'alpha': 0.0001, 'class_weight': 'balanced'}",0.2582409460458241,0.2528409090909091,0.28922767522221043
+13,5,Reduced_features,XGBClassifier,"{'learning_rate': 0.01, 'max_depth': 3, 'min_child_weight': 1, 'n_jobs': -1}",0.4774279379157428,0.5227272727272727,0.4709239410553208
+14,5,Reduced_features,LogisticRegression,"{'C': 0.5, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l1', 'solver': 'saga'}",0.4774722838137472,0.5625,0.5173586086451055
+15,5,Complete_features,RidgeClassifier,"{'alpha': 0.1, 'class_weight': 'balanced'}",0.2959497413155949,0.29545454545454547,0.3445954205718059
+16,5,Complete_features,XGBClassifier,"{'learning_rate': 0.01, 'max_depth': 3, 'min_child_weight': 1, 'n_jobs': -1}",0.48844050258684407,0.5227272727272727,0.4783762521821944
+17,5,Complete_features,LogisticRegression,"{'C': 1, 'max_iter': 10000, 'n_jobs': -1, 'penalty': 'l2', 'solver': 'saga'}",0.4810569105691057,0.4914772727272727,0.4627068070818071
